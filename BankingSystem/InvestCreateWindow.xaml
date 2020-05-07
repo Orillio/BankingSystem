@@ -1,0 +1,24 @@
+﻿<Window x:Class="BankingSystem.InvestCreateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BankingSystem"
+        mc:Ignorable="d"
+        Height="250" Width="300"
+        MinHeight="250" MinWidth="300"
+        MaxHeight="250" MaxWidth="300"
+        Title="InvestCreateWindow" WindowStartupLocation="CenterScreen">
+    <Grid Background="#eee">
+        <StackPanel Margin="10" Background="White" Orientation="Vertical" >
+            <TextBlock HorizontalAlignment="Center" Margin="0 45 0 0" Text="Введите сумму вклада" />
+            <TextBox x:Name="InvestField" Height="25" Margin="50 15 50 0" TextAlignment="Center" FontSize="14"/>
+            <ComboBox Height="20" Margin="50 15 50 0" FontSize="12" SelectedItem="{Binding SelectedInvType}">
+                <ComboBoxItem IsSelected="True" Content="С капитализацией"/>
+                <ComboBoxItem Content="Без капитализации"/>
+            </ComboBox>
+            <Button Margin="70 15 70 0" Content="Вложить" Command="{Binding InvestmentButton}"/>
+        </StackPanel>
+
+    </Grid>
+</Window>
