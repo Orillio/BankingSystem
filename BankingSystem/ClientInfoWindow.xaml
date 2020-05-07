@@ -1,0 +1,58 @@
+﻿<Window x:Class="BankingSystem.ClientInfoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BankingSystem"
+        mc:Ignorable="d"
+        MinHeight="300" MinWidth="300"
+        MaxHeight="300" MaxWidth="300"
+        Title="ClientInfoWindow" Height="300" Width="300" WindowStartupLocation="CenterScreen">
+    <Grid Background="#eee">
+        
+        
+        <StackPanel Orientation="Vertical" Margin="10" Background="White">
+            
+            <!--<StackPanel Height="15" VerticalAlignment="Top" Orientation="Horizontal" Margin="5">
+                <TextBlock Margin="0,0,5,0" FontSize="12" Text="Клиент: "/>
+                <TextBlock FontSize="12" Text="{Binding FirstName}"/>
+                <TextBlock FontSize="12" Margin="0,0,5,0" Text="{Binding LastName}"/>
+                <TextBlock FontSize="12" Text="{Binding Patronymic}"/>
+            </StackPanel>-->
+
+            <StackPanel Margin="5" Orientation="Horizontal">
+                <TextBlock Margin="0,0,5,0" FontSize="12" Text="Сумма вклада: "/>
+                <TextBlock FontSize="12" Text="{Binding Converter={x:Static local:InvestmentPropertiesConverter.Instance}, ConverterParameter=Sum}"/>
+            </StackPanel>
+
+            <StackPanel Margin="5" Orientation="Horizontal">
+                <TextBlock Margin="0,0,5,0" FontSize="12" Text="Дата вклада: "/>
+                <TextBlock FontSize="12" Text="{Binding Converter={x:Static local:InvestmentPropertiesConverter.Instance}, ConverterParameter=Date}"/>
+            </StackPanel>
+            
+            <StackPanel Margin="5" Orientation="Horizontal">
+                <TextBlock Margin="0,0,5,0" FontSize="12" Text="Тип вклада: "/>
+                <TextBlock FontSize="12" Text="{Binding Converter={x:Static local:InvestmentPropertiesConverter.Instance}, ConverterParameter=Type}"/>
+            </StackPanel>
+
+            <StackPanel Margin="5" Orientation="Horizontal">
+                <TextBlock Margin="0,0,5,0" FontSize="12" Text="Ставка: "/>
+                <TextBlock FontSize="12" Text="{Binding Converter={x:Static local:InvestmentPropertiesConverter.Instance}, ConverterParameter=Percentage}"/>
+            </StackPanel>
+            
+            <StackPanel Margin="5" Orientation="Horizontal">
+                <TextBlock Margin="0,0,5,0" FontSize="12" Text="Текущая дата: "/>
+                <TextBlock FontSize="12" Text="{Binding Converter={x:Static local:InvestmentPropertiesConverter.Instance}, ConverterParameter=CurrentDate}"/>
+            </StackPanel>
+            
+            <StackPanel Margin="5" Orientation="Horizontal">
+                <TextBlock Margin="0,0,5,0" FontSize="12" Text="Текущая сумма: "/>
+                <TextBlock FontSize="12" Text="{Binding Converter={x:Static local:InvestmentPropertiesConverter.Instance}, ConverterParameter=CurrentSum}"/>
+            </StackPanel>
+            
+
+            <Button x:Name="WithDraw" Content="Вывести сумму" HorizontalAlignment="Left" FontSize="15"
+                    Padding="0 0 0 3" Margin="5" Width="115" Command="{Binding WithdrawButton}"/>
+        </StackPanel>
+    </Grid>
+</Window>
