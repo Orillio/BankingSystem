@@ -61,12 +61,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AddClientWindow.xaml.cs">
+      <DependentUpon>AddClientWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ClientInfoWindow.xaml.cs">
       <DependentUpon>ClientInfoWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Commands\Command.cs" />
     <Compile Include="Converter\InvestmentPropertiesConverter.cs" />
-    <Compile Include="Departments\BaseDepartment.cs" />
     <Compile Include="Departments\Department.cs" />
     <Compile Include="Converter\InvestmentConverter.cs" />
     <Compile Include="DepositWindow.xaml.cs">
@@ -81,6 +83,10 @@
     <Compile Include="ViewModels\Bank.cs" />
     <Compile Include="PropertyChangedClass\PropertiesChanged.cs" />
     <Compile Include="Clients\VIPClient.cs" />
+    <Page Include="AddClientWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ClientInfoWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -154,6 +160,14 @@
   <ItemGroup>
     <Resource Include="img\deposit.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="img\add.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="img\delete.png" />
+    <Resource Include="img\edit.png" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.6.1.1\build\Fody.targets" Condition="Exists('..\packages\Fody.6.1.1\build\Fody.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

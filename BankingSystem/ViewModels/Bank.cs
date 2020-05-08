@@ -1,7 +1,7 @@
-﻿using BankingSystem.Departments;
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,7 +11,7 @@ namespace BankingSystem
     class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
         #region Рандом
-        public Random Random { get; set; } = new Random();
+        public static Random Random { get; set; } = new Random();
 
         #endregion
 
@@ -24,7 +24,7 @@ namespace BankingSystem
         private InvestCreateWindow CreateInvest { get; set; }
         private TransferWindow Transfer { get; set; }
         private DepositWindow Deposit { get; set; }
-
+        private AddClientWindow AddClient { get; set; }
         #endregion
 
         #region Переданные данные через View
@@ -32,6 +32,7 @@ namespace BankingSystem
         public BaseDepartment SelectedDepartment { get; set; } // Информация о выбранном отделе, которая передается через View
         public DateTime CurrentDate { get; set; } = DateTime.Now;
         public ComboBoxItem SelectedInvType { get; set; }
+        public ComboBoxItem SelectedClientType { get; set; }
         #endregion
 
         #region Команды
@@ -42,6 +43,8 @@ namespace BankingSystem
         public ICommand TransferButtonWindow { get; set; }
         public ICommand DepositButton { get; set; }
         public ICommand DepositButtonWindow { get; set; }
+        public ICommand AddClientButton { get; set; }
+        public ICommand AddClientButtonWindow { get; set; }
 
         #endregion
 
@@ -63,7 +66,7 @@ namespace BankingSystem
 
                 InvestmentType type = (string)SelectedInvType.Content == "С капитализацией" ? InvestmentType.Capitalization : InvestmentType.NotCapitalization;
                 ClientType clientType = SelectedClient.GetType() == typeof(Individual) ? ClientType.Individual : SelectedClient.GetType() == typeof(VIPClient) ? ClientType.VIP : ClientType.Juridical;
-                SelectedClient.Investment = new Investment(type, clientType, result, DateTime.Now);
+                SelectedClient.Investment = new Investment(type, clientType, result, CurrentDate);
                 SelectedClient.BankBalance = SelectedClient.BankBalance - result;
                 CreateInvest.Close();
                 MessageBox.Show("Вклад оформлен!");
@@ -99,7 +102,7 @@ namespace BankingSystem
                 switch (SelectedClient.ClientType)
                 {
                     case ClientType.VIP:
-                        res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {sum}$","Информация", MessageBoxButton.YesNo);
+                        res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {sum}$", "Информация", MessageBoxButton.YesNo);
                         if (res != MessageBoxResult.Yes) return;
                         SelectedClient.BankBalance -= sum;
                         client.BankBalance += sum;
@@ -136,6 +139,7 @@ namespace BankingSystem
             });
             DepositButton = new Command(() =>
             {
+                if (SelectedClient == null) return;
                 Deposit = new DepositWindow();
                 Deposit.DataContext = this;
                 Deposit.Closed += (sender, e) => { this.Deposit = null; };
@@ -150,7 +154,42 @@ namespace BankingSystem
                 Deposit.Close();
                 MessageBox.Show("Баланс пополнен!");
             });
+            AddClientButton = new Command(() =>
+            {
+                AddClient = new AddClientWindow();
+                AddClient.DataContext = this;
+                AddClient.ShowDialog();
 
+            });
+            AddClientButtonWindow = new Command(() =>
+            {
+                if (string.IsNullOrEmpty(AddClient.Name.Text) || string.IsNullOrEmpty(AddClient.Lastname.Text) || string.IsNullOrEmpty(AddClient.Patromymic.Text)
+                    || string.IsNullOrEmpty(AddClient.Age.Text) || AddClient.Name.Text.Trim(' ') == "" || AddClient.Lastname.Text.Trim(' ') == "" ||
+                        AddClient.Patromymic.Text.Trim(' ') == "" || AddClient.Age.Text.Trim(' ') == "") { MessageBox.Show("Одно или несколько полей не введены"); return; }
+
+                if (!int.TryParse(AddClient.Age.Text, out int res)) { MessageBox.Show("Введен неправильный возраст"); return; }
+                if (res > 200) { MessageBox.Show("Введен невозможный для человека возраст"); return; }
+                if (SelectedClientType == null) { MessageBox.Show("Вы не выбрали тип клиента"); return; }
+                AbstractClient newClient = null;
+                if (SelectedClientType.Tag.Equals("VIP"))
+                {
+                    newClient = new VIPClient(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
+                    (DepItems[2] as Department<VIPClient>).Clients.Add(newClient as VIPClient);
+                }
+                else if (SelectedClientType.Tag.Equals("Indiv"))
+                {
+                    newClient = new Individual(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Name.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
+                    (DepItems[1] as Department<Individual>).Clients.Add(newClient as Individual);
+                }
+                else
+                {
+                    newClient = new Juridical(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
+                    (DepItems[0] as Department<Juridical>).Clients.Add(newClient as Juridical);
+                }
+                AddClient.Close();
+                MessageBox.Show("Клиент добавлен!");
+
+            });
             #endregion
 
             #region Инициализация отделов
@@ -286,30 +325,30 @@ namespace BankingSystem
                 case ClientType.VIP:
                     if (Random.Next(0, 2) == 0)
                         if (Random.Next(0, 2) == 0) return new Investment(InvestmentType.Capitalization, ClientType.VIP, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2000, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
+                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
                         else return new Investment(InvestmentType.NotCapitalization, ClientType.VIP, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2000,DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
+                            new DateTime(Random.Next(2010,DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
                     else return null;
                 case ClientType.Individual:
                     if (Random.Next(0, 2) == 0)
                         if (Random.Next(0, 2) == 0) return new Investment(InvestmentType.Capitalization, ClientType.Individual, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2000, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
+                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
                         else return new Investment(InvestmentType.NotCapitalization, ClientType.Individual, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2000, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
+                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
                     else return null;
                 case ClientType.Juridical:
                     if (Random.Next(0, 2) == 0)
                         if (Random.Next(0, 2) == 0) return new Investment(InvestmentType.Capitalization, ClientType.Juridical, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2000, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
+                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
                         else return new Investment(InvestmentType.NotCapitalization, ClientType.Juridical, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2000, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
+                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
                     else return null;
                 default:
                     break;
             }
             return null;
         } // рандомная информация о вкладе
-        private string CardRandom()
+        public static string CardRandom()
         {
             string longrandom = Random.Next(1_000_000_000, int.MaxValue).ToString() + Random.Next(1_000_000_000, int.MaxValue).ToString();
             longrandom = longrandom.Substring(longrandom.Length - 16);
@@ -329,18 +368,19 @@ namespace BankingSystem
         {
             for (int i = 0; i < count; i++)
             {
-                (DepItems[0] as Department<Juridical>).Clients.Add(new Juridical(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.Juridical, Random.Next(18,40),
-                    long.Parse(CardRandom()), Random.Next(10, 100000), RandomInvest(ClientType.Juridical)));
+                (DepItems[0] as Department<Juridical>).Clients.Add(new Juridical(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.Juridical, Random.Next(18, 40))
+                { Investment = RandomInvest(ClientType.VIP), BankBalance = Random.Next(10, 100000), CardNumber = long.Parse(CardRandom()) });
             }
             for (int i = 0; i < count; i++)
             {
-               (DepItems[1] as Department<Individual>).Clients.Add(new Individual(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.Individual, Random.Next(18, 40),
-                    long.Parse(CardRandom()), Random.Next(10, 100000), RandomInvest(ClientType.Individual)));
+               (DepItems[1] as Department<Individual>).Clients.Add(new Individual(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.Individual, Random.Next(18, 40))
+               { Investment = RandomInvest(ClientType.VIP), BankBalance = Random.Next(10, 100000), CardNumber = long.Parse(CardRandom()) });
             }
             for (int i = 0; i < count; i++)
             {
-                (DepItems[2] as Department<VIPClient>).Clients.Add(new VIPClient(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.VIP, Random.Next(18, 40),
-                    long.Parse(CardRandom()), Random.Next(10, 100000), RandomInvest(ClientType.VIP)));
+                (DepItems[2] as Department<VIPClient>).Clients.Add(new VIPClient(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.VIP, Random.Next(18, 40))
+                { Investment = RandomInvest(ClientType.VIP), BankBalance = Random.Next(10, 100000), CardNumber = long.Parse(CardRandom()) });
+                
             }
         } // заполнение сотрудниками
         #endregion

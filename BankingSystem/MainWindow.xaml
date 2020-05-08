@@ -43,9 +43,45 @@
         
         <!--Дейтсвия с клиентами-->
         <Border Grid.Row="2" Grid.Column="0" BorderBrush="Gray" BorderThickness="1">
-            <Grid>
-
-            </Grid>
+            <StackPanel Margin="15">
+                <Button Height="25" Cursor="Hand" Command="{Binding AddClientButton}">
+                    <Button.Template>
+                        <ControlTemplate>
+                            <Border BorderBrush="Gray" BorderThickness="1" Cursor="Hand">
+                                <StackPanel Background="Wheat" Orientation="Horizontal">
+                                    <Image Source="img/add.png" Width="20" Margin="2 0 5 0" HorizontalAlignment="Left"/>
+                                    <ContentPresenter Content="Добавить клиента" Margin="0 0 0 1" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                <Button Height="25" Margin="0 19" Cursor="Hand" Command="{Binding}">
+                    <Button.Template>
+                        <ControlTemplate>
+                            <Border BorderBrush="Gray" BorderThickness="1" Cursor="Hand">
+                                <StackPanel Background="Wheat" Orientation="Horizontal">
+                                    <Image Source="img/edit.png" Width="20" Margin="2 0 5 0" HorizontalAlignment="Left"/>
+                                    <ContentPresenter Content="Изменить клиента" Margin="0 0 0 1" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                
+                <Button Height="25" Cursor="Hand" Command="{Binding}">
+                    <Button.Template>
+                        <ControlTemplate>
+                            <Border BorderBrush="Gray" BorderThickness="1" Cursor="Hand">
+                                <StackPanel Background="Wheat" Orientation="Horizontal">
+                                    <Image Source="img/delete.png" Width="20" Margin="2 0 5 0" HorizontalAlignment="Left"/>
+                                    <ContentPresenter Content="Удалить клиента" Margin="0 0 0 1" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
         </Border>
         
         <!--Информация о клиенте-->

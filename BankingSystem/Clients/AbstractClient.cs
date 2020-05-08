@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace BankingSystem
 {
-    abstract class AbstractClient : PropertiesChanged
+    public abstract class AbstractClient : PropertiesChanged
     {
         public ClientType ClientType { get; set; }
         public string FirstName{ get; set; }
@@ -20,16 +20,16 @@ namespace BankingSystem
         public long CardNumber { get; set; }
         public Investment Investment { get; set; }
 
-        public AbstractClient(string name, string lastname, string patronymic, ClientType clientType, int age, long cardnumber, long balance, Investment investment)
+        public AbstractClient(string name, string lastname, string patronymic, ClientType clientType, int age)
         {
             this.ClientType = clientType;
-            this.Investment = investment;
-            this.BankBalance = balance;
             this.FirstName = name;
             this.LastName = lastname;
             this.Patronymic = patronymic;
             this.Age = age;
-            this.CardNumber = cardnumber;
+            this.Investment = null;
+            this.BankBalance = 0;
+            this.CardNumber = long.Parse(Bank.CardRandom());
         }
 
     }
