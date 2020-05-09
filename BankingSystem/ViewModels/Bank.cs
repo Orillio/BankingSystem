@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Newtonsoft.Json;
 
 namespace BankingSystem
 {
@@ -25,6 +28,7 @@ namespace BankingSystem
         private TransferWindow Transfer { get; set; }
         private DepositWindow Deposit { get; set; }
         private AddClientWindow AddClient { get; set; }
+        private EditClientWindow EditClient { get; set; }
         #endregion
 
         #region Переданные данные через View
@@ -33,11 +37,12 @@ namespace BankingSystem
         public DateTime CurrentDate { get; set; } = DateTime.Now;
         public ComboBoxItem SelectedInvType { get; set; }
         public ComboBoxItem SelectedClientType { get; set; }
+        public ComboBoxItem EditSelectedClientType { get; set; }
         #endregion
 
         #region Команды
         public ICommand InvestmentButton { get; set; } 
-        public ICommand InfoClick { get; set; } // команда для открытия окна информации о выбранном клиенте
+        public ICommand InfoClick { get; set; }
         public ICommand WithdrawButton { get; set; }
         public ICommand TransferButton { get; set; }
         public ICommand TransferButtonWindow { get; set; }
@@ -45,14 +50,36 @@ namespace BankingSystem
         public ICommand DepositButtonWindow { get; set; }
         public ICommand AddClientButton { get; set; }
         public ICommand AddClientButtonWindow { get; set; }
+        public ICommand EditClientButton { get; set; }
+        public ICommand EditClientButtonWindow { get; set; }
+        public ICommand DeleteClient { get; set; }
 
         #endregion
-
+        
         public Bank()
         {
+            #region Инициализация отделов
+            DepItems = new ObservableCollection<BaseDepartment>(); // добавление отделов в коллекцию
+            DepItems.Add(new Department<Juridical>("Юридические лица"));
+            DepItems.Add(new Department<Individual>("Физические лица"));
+            DepItems.Add(new Department<VIPClient>("VIP Клиенты"));
+
+            #endregion
+
             #region Команды
 
-            InfoClick = new Command(ClickInfo);
+            InfoClick = new Command(ClickInfo); // открытие информационной панели о вкладе
+            WithdrawButton = new Command(() =>
+            {
+                var res = MessageBox.Show($"Вы уверены что хотите вывести вклад? Вы выведите {SelectedClient.Investment.CurrentSum}$", "",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (res != MessageBoxResult.Yes) return;
+                SelectedClient.BankBalance += SelectedClient.Investment.CurrentSum;
+                SelectedClient.Investment = null;
+                Info.Close();
+                JsonSerialize(this);
+                MessageBox.Show("Вы вывели вклад на свой счет.", "", MessageBoxButton.OK, MessageBoxImage.Information);
+            }); // вывод средств из вклада на счет
             InvestmentButton = new Command(() =>
             {
                 #region Обратные условия
@@ -69,8 +96,9 @@ namespace BankingSystem
                 SelectedClient.Investment = new Investment(type, clientType, result, CurrentDate);
                 SelectedClient.BankBalance = SelectedClient.BankBalance - result;
                 CreateInvest.Close();
+                JsonSerialize(this);
                 MessageBox.Show("Вклад оформлен!");
-            });
+            }); // окно открытия вклада
             TransferButton = new Command(() =>
             {
                 if (this.Transfer != null) return;
@@ -80,7 +108,7 @@ namespace BankingSystem
                 Transfer.Closed += (sender, e) => { this.Transfer = null; };
                 Transfer.DataContext = this;
                 Transfer.ShowDialog();
-            });
+            }); // открытие окна перевода средств
             TransferButtonWindow = new Command(() =>
             {
                 var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
@@ -125,18 +153,9 @@ namespace BankingSystem
                         break;
                 }
                 Transfer.Close();
+                JsonSerialize(this);
                 MessageBox.Show("Перевод завершен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Asterisk);
-            });
-            WithdrawButton = new Command(() =>
-            {
-                var res = MessageBox.Show($"Вы уверены что хотите вывести вклад? Вы выведите {SelectedClient.Investment.CurrentSum}$", "",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (res != MessageBoxResult.Yes) return;
-                SelectedClient.BankBalance += SelectedClient.Investment.CurrentSum;
-                SelectedClient.Investment = null;
-                Info.Close();
-                MessageBox.Show("Вы вывели вклад на свой счет.", "", MessageBoxButton.OK, MessageBoxImage.Information);
-            });
+            }); // перевод средств на другой счет
             DepositButton = new Command(() =>
             {
                 if (SelectedClient == null) return;
@@ -144,7 +163,7 @@ namespace BankingSystem
                 Deposit.DataContext = this;
                 Deposit.Closed += (sender, e) => { this.Deposit = null; };
                 Deposit.ShowDialog();
-            });
+            }); // открытие окна пополнения счета
             DepositButtonWindow = new Command(() =>
             {
                 if (string.IsNullOrEmpty(Deposit.DepositField.Text)) { MessageBox.Show("Поле пустое"); return; }
@@ -152,15 +171,16 @@ namespace BankingSystem
                 if (result > 10000) { MessageBox.Show("Нельзя пополнить счет на сумму более 10000$ за раз"); return; }
                 SelectedClient.BankBalance += result;
                 Deposit.Close();
+                JsonSerialize(this);
                 MessageBox.Show("Баланс пополнен!");
-            });
+            }); // пополнение счета 
             AddClientButton = new Command(() =>
             {
                 AddClient = new AddClientWindow();
                 AddClient.DataContext = this;
                 AddClient.ShowDialog();
 
-            });
+            }); // открытие окна добавления клиента
             AddClientButtonWindow = new Command(() =>
             {
                 if (string.IsNullOrEmpty(AddClient.Name.Text) || string.IsNullOrEmpty(AddClient.Lastname.Text) || string.IsNullOrEmpty(AddClient.Patromymic.Text)
@@ -187,21 +207,118 @@ namespace BankingSystem
                     (DepItems[0] as Department<Juridical>).Clients.Add(newClient as Juridical);
                 }
                 AddClient.Close();
+                JsonSerialize(this);
                 MessageBox.Show("Клиент добавлен!");
 
+            }); // добавление клиента
+            EditClientButton = new Command(() =>
+            {
+                if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }
+                EditClient = new EditClientWindow();
+                EditClient.DataContext = this;
+                EditClient.ShowDialog();
+            }); // открытие окна изменения клиента
+            EditClientButtonWindow = new Command(() =>
+            {
+                if (EditClient.Age.Text != "" && EditClient.Age.Text.Trim(' ') != "")
+                {
+                    if (int.Parse(EditClient.Age.Text) > 200) { MessageBox.Show("Вы ввели нереальный возраст"); return; }
+                    SelectedClient.Age = int.Parse(EditClient.Age.Text);
+                }
+                if (EditClient.Name.Text != "" && EditClient.Name.Text.Trim(' ') != "") SelectedClient.FirstName = EditClient.Name.Text;
+                if (EditClient.Lastname.Text != "" && EditClient.Lastname.Text.Trim(' ') != "") SelectedClient.LastName = EditClient.Lastname.Text;
+                if (EditClient.Patronymic.Text != "" && EditClient.Patronymic.Text.Trim(' ') != "") SelectedClient.Patronymic = EditClient.Patronymic.Text;
+                if (EditSelectedClientType != null)
+                {
+                    ClientType cltype = EditSelectedClientType.Tag.Equals("VIP") ? ClientType.VIP : EditSelectedClientType.Tag.Equals("Indiv") ? ClientType.Individual : ClientType.Juridical;
+                    if (SelectedClient.ClientType == cltype) { EditClient.Close(); MessageBox.Show("Клиент изменен"); return; }
+                    else
+                    {
+                        var c = SelectedClient;
+                        switch (cltype)
+                        {
+                            case ClientType.VIP:
+                                (DepItems[2] as Department<VIPClient>).Clients.Add(new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.VIP, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment });
+                                break;
+                            case ClientType.Individual:
+                                (DepItems[1] as Department<Individual>).Clients.Add(new Individual(c.FirstName, c.LastName, c.Patronymic, ClientType.Individual, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment });
+                                break;
+                            case ClientType.Juridical:
+                                (DepItems[0] as Department<Juridical>).Clients.Add(new Juridical(c.FirstName, c.LastName, c.Patronymic, ClientType.Juridical, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment });
+                                break;
+                            default:
+                                break;
+                        }
+                        switch (c.ClientType)
+                        {
+                            case ClientType.VIP:
+                                (DepItems[2] as Department<VIPClient>).Clients.Remove(SelectedClient as VIPClient);
+                                SelectedClient = null;
+                                break;
+                            case ClientType.Individual:
+                                (DepItems[1] as Department<Individual>).Clients.Remove(SelectedClient as Individual);
+                                SelectedClient = null;
+                                break;
+                            case ClientType.Juridical:
+                                (DepItems[0] as Department<Juridical>).Clients.Remove(SelectedClient as Juridical);
+                                SelectedClient = null;
+                                break;
+                            default:
+                                break;
+                        }
+                        EditClient.Close();
+                        JsonSerialize(this);
+                        MessageBox.Show("Клиент изменен");
+                        return;
+                    }
+                }
+                else { EditClient.Close(); MessageBox.Show("Клиент изменен"); return; }
+            }); // изменение клиента
+            DeleteClient = new Command(() =>
+            {
+                if (SelectedClient == null) { MessageBox.Show("Клиент не выбран"); return; }
+                var res = MessageBox.Show("Вы уверены, что хотите удалить клиента?", "", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (res == MessageBoxResult.No) return;
+                switch (SelectedClient.ClientType)
+                {
+                    case ClientType.VIP:
+                        (DepItems[2] as Department<VIPClient>).Clients.Remove(SelectedClient as VIPClient);
+                        SelectedClient = null;
+                        break;
+                    case ClientType.Individual:
+                        (DepItems[1] as Department<Individual>).Clients.Remove(SelectedClient as Individual);
+                        SelectedClient = null;
+                        break;
+                    case ClientType.Juridical:
+                        (DepItems[0] as Department<Juridical>).Clients.Remove(SelectedClient as Juridical);
+                        SelectedClient = null;
+                        break;
+                    default:
+                        break;
+                }
+                JsonSerialize(this);
+                MessageBox.Show("Клиент удален");
             });
             #endregion
 
-            #region Инициализация отделов
-            DepItems = new ObservableCollection<BaseDepartment>(); // добавление отделов в коллекцию
-            DepItems.Add(new Department<Juridical>("Юридические лица"));
-            DepItems.Add(new Department<Individual>("Физические лица"));
-            DepItems.Add(new Department<VIPClient>("VIP Клиенты"));
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            if (File.Exists($@"{path}\BankLogs\Juridical.json") && File.Exists($@"{path}\BankLogs\Individual.json") && File.Exists($@"{path}\BankLogs\VIP.json"))
+            {
+                DepItems[0] = JuridJsonDeserialize();
+                DepItems[1] = IndivJsonDeserialize();
+                DepItems[2] = VIPJsonDeserialize();
+            }
 
-            #endregion
-
-            FillClients(10); // заполнение рандомными сотрудниками во всех отделах
+            else
+            {
+                FillClients(10);
+                JsonSerialize(this);
+            }    
         }
+
 
         #region Рандомное заполнение
 
@@ -212,34 +329,34 @@ namespace BankingSystem
                 {
                     case 0: return "Филипп";
                     case 1: return "Харитон";
-                    case 2: return "Корнелий ";
-                    case 3: return "Валерий ";
-                    case 4: return "Евгений ";
-                    case 5: return "Чарльз ";
-                    case 6: return "Оливер ";
-                    case 7: return "Цицерон ";
-                    case 8: return "Ананий ";
-                    case 9: return "Болеслав ";
-                    case 10: return "Пётр ";
-                    case 11: return "Яков ";
-                    case 12: return "Борис ";
-                    case 13: return "Зураб ";
-                    case 14: return "Яромир ";
-                    case 15: return "Закир ";
-                    case 16: return "Сава ";
-                    case 17: return "Никодим ";
-                    case 18: return "Эдуард ";
-                    case 19: return "Константин ";
-                    case 20: return "Трофим ";
-                    case 21: return "Орландо ";
-                    case 22: return "Бронислав ";
-                    case 23: return "Йозеф ";
-                    case 24: return "Вячеслав ";
-                    case 25: return "Борис ";
-                    case 26: return "Тимофей ";
-                    case 27: return "Богдан ";
+                    case 2: return "Корнелий";
+                    case 3: return "Валерий";
+                    case 4: return "Евгений";
+                    case 5: return "Чарльз";
+                    case 6: return "Оливер";
+                    case 7: return "Цицерон";
+                    case 8: return "Ананий";
+                    case 9: return "Болеслав";
+                    case 10: return "Пётр";
+                    case 11: return "Яков";
+                    case 12: return "Борис";
+                    case 13: return "Зураб";
+                    case 14: return "Яромир";
+                    case 15: return "Закир";
+                    case 16: return "Сава";
+                    case 17: return "Никодим";
+                    case 18: return "Эдуард";
+                    case 19: return "Константин";
+                    case 20: return "Трофим";
+                    case 21: return "Орландо";
+                    case 22: return "Бронислав";
+                    case 23: return "Йозеф";
+                    case 24: return "Вячеслав";
+                    case 25: return "Борис";
+                    case 26: return "Тимофей";
+                    case 27: return "Богдан";
                     case 28: return "Филипп";
-                    case 29: return "Феликс ";
+                    case 29: return "Феликс";
                     default:
                         return "Игнатий";
                 }
@@ -384,6 +501,37 @@ namespace BankingSystem
             }
         } // заполнение сотрудниками
         #endregion
+        private Department<Juridical> JuridJsonDeserialize()
+        {
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string json = File.ReadAllText($@"{path}\BankLogs\Juridical.json");
+            return JsonConvert.DeserializeObject<Department<Juridical>>(json);
+        }
+        private Department<Individual> IndivJsonDeserialize()
+        {
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string json = File.ReadAllText($@"{path}\BankLogs\Individual.json");
+            return JsonConvert.DeserializeObject<Department<Individual>>(json);
+        }
+        private Department<VIPClient> VIPJsonDeserialize()
+        {
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string json = File.ReadAllText($@"{path}\BankLogs\VIP.json");
+            return JsonConvert.DeserializeObject<Department<VIPClient>>(json);
+        }
+        private void JsonSerialize(Bank bank)
+        {
+            if (!Directory.Exists($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs"))
+                Directory.CreateDirectory($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs");
+
+            var json = JsonConvert.SerializeObject(bank.DepItems[0] as Department<Juridical>);
+            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Juridical.json", json);
+            var json1 = JsonConvert.SerializeObject(bank.DepItems[1] as Department<Individual>);
+            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Individual.json", json1);
+            var json2 = JsonConvert.SerializeObject(bank.DepItems[2] as Department<VIPClient>);
+            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\VIP.json", json2);
+        }
+
         private void ClickInfo() // выполняется при нажатии на кнопку информации
         {
             if (Info != null) return;
@@ -414,6 +562,9 @@ namespace BankingSystem
 
 
         }
+
+
+
         private bool CheckCardNumber(long cardnumber, out AbstractClient client)
         {
             foreach (var item in (DepItems[0] as Department<Juridical>).Clients)
