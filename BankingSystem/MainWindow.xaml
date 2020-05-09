@@ -188,19 +188,19 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn DisplayMemberBinding="{Binding FirstName}">
-                            <GridViewColumnHeader Width="140">Имя</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding NameClick}" Width="140">Имя</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding LastName}">
-                            <GridViewColumnHeader Width="140">Фамилия</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding LastClick}" Width="140">Фамилия</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding Patronymic}">
-                            <GridViewColumnHeader Width="140">Отчество</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding PatrClick}" Width="140">Отчество</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding CardNumber, Converter={x:Static local:CardConverter.Instance}}">
                             <GridViewColumnHeader Width="150">Номер карты</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding BankBalance}">
-                            <GridViewColumnHeader Width="140">Баланс</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding BalanceClick}" Width="140">Баланс</GridViewColumnHeader>
                         </GridViewColumn>
                     </GridView>
                 </ListView.View>

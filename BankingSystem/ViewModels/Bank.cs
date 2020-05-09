@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,6 +12,7 @@ using Newtonsoft.Json;
 
 namespace BankingSystem
 {
+    enum OrderType { Name, NameDesc, Lastname, LastnameDesc, Age, AgeDesc, Balance, BalanceDesc }
     class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
         #region Рандом
@@ -53,9 +55,22 @@ namespace BankingSystem
         public ICommand EditClientButton { get; set; }
         public ICommand EditClientButtonWindow { get; set; }
         public ICommand DeleteClient { get; set; }
+        public ICommand NameClick { get; set; }
+        public ICommand LastClick { get; set; }
+        public ICommand PatrClick { get; set; }
+        public ICommand BalanceClick { get; set; }
+
 
         #endregion
-        
+
+        #region Дополнительные переменные для сортировки
+        bool namedesc = false;
+        bool lastdesc = false;
+        bool agedesc = false;
+        bool balancedesc = false;
+        #endregion
+
+        #region Конструктор
         public Bank()
         {
             #region Инициализация отделов
@@ -64,6 +79,22 @@ namespace BankingSystem
             DepItems.Add(new Department<Individual>("Физические лица"));
             DepItems.Add(new Department<VIPClient>("VIP Клиенты"));
 
+            #endregion
+
+            #region Десериализация
+
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            if (File.Exists($@"{path}\BankLogs\Juridical.json") && File.Exists($@"{path}\BankLogs\Individual.json") && File.Exists($@"{path}\BankLogs\VIP.json"))
+            {
+                DepItems[0] = JuridJsonDeserialize();
+                DepItems[1] = IndivJsonDeserialize();
+                DepItems[2] = VIPJsonDeserialize();
+            }
+            else
+            {
+                FillClients(10);
+                JsonSerialize(this);
+            }    
             #endregion
 
             #region Команды
@@ -302,23 +333,199 @@ namespace BankingSystem
                 JsonSerialize(this);
                 MessageBox.Show("Клиент удален");
             });
+            NameClick = new Command(() =>
+            {
+                if (SelectedDepartment is Department<VIPClient>)
+                {
+                    var c = (DepItems[2] as Department<VIPClient>).Clients;
+                    if (!namedesc)
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.FirstName));
+                        namedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.FirstName));
+                        namedesc = false;
+                    }
+                }
+                else if (SelectedDepartment is Department<Individual>)
+                {
+                    var c = (DepItems[1] as Department<Individual>).Clients;
+                    if (!namedesc)
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.FirstName));
+                        namedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.FirstName));
+                        namedesc = false;
+
+                    }
+                }
+                else
+                {
+                    var c = (DepItems[0] as Department<Juridical>).Clients;
+                    if (!namedesc)
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.FirstName));
+                        namedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.FirstName));
+                        namedesc = false;
+
+                    }
+                }
+                
+            });
+            LastClick = new Command(() =>
+            {
+                if (SelectedDepartment is Department<VIPClient>)
+                {
+                    var c = (DepItems[2] as Department<VIPClient>).Clients;
+                    if (!lastdesc)
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.LastName));
+                        lastdesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.LastName));
+                        lastdesc = false;
+                    }
+                }
+                else if (SelectedDepartment is Department<Individual>)
+                {
+                    var c = (DepItems[1] as Department<Individual>).Clients;
+                    if (!lastdesc)
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.LastName));
+                        lastdesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.LastName));
+                        lastdesc = false;
+
+                    }
+                }
+                else
+                {
+                    var c = (DepItems[0] as Department<Juridical>).Clients;
+                    if (!lastdesc)
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.LastName));
+                        lastdesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.LastName));
+                        lastdesc = false;
+
+                    }
+                }
+            });
+            PatrClick = new Command(() =>
+            {
+                if (SelectedDepartment is Department<VIPClient>)
+                {
+                    var c = (DepItems[2] as Department<VIPClient>).Clients;
+                    if (!agedesc)
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.Age));
+                        agedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.Age));
+                        agedesc = false;
+                    }
+                }
+                else if (SelectedDepartment is Department<Individual>)
+                {
+                    var c = (DepItems[1] as Department<Individual>).Clients;
+                    if (!agedesc)
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.Age));
+                        agedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.Age));
+                        agedesc = false;
+
+                    }
+                }
+                else
+                {
+                    var c = (DepItems[0] as Department<Juridical>).Clients;
+                    if (!agedesc)
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.Age));
+                        agedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.Age));
+                        agedesc = false;
+
+                    }
+                }
+            });
+            BalanceClick = new Command(() =>
+            {
+                if (SelectedDepartment is Department<VIPClient>)
+                {
+                    var c = (DepItems[2] as Department<VIPClient>).Clients;
+                    if (!balancedesc)
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.BankBalance));
+                        balancedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.BankBalance));
+                        balancedesc = false;
+                    }
+                }
+                else if (SelectedDepartment is Department<Individual>)
+                {
+                    var c = (DepItems[1] as Department<Individual>).Clients;
+                    if (!balancedesc)
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.BankBalance));
+                        balancedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.BankBalance));
+                        balancedesc = false;
+
+                    }
+                }
+                else
+                {
+                    var c = (DepItems[0] as Department<Juridical>).Clients;
+                    if (!balancedesc)
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.BankBalance));
+                        balancedesc = true;
+                    }
+                    else
+                    {
+                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.BankBalance));
+                        balancedesc = false;
+
+                    }
+                }
+            });
             #endregion
 
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            if (File.Exists($@"{path}\BankLogs\Juridical.json") && File.Exists($@"{path}\BankLogs\Individual.json") && File.Exists($@"{path}\BankLogs\VIP.json"))
-            {
-                DepItems[0] = JuridJsonDeserialize();
-                DepItems[1] = IndivJsonDeserialize();
-                DepItems[2] = VIPJsonDeserialize();
-            }
-
-            else
-            {
-                FillClients(10);
-                JsonSerialize(this);
-            }    
         }
-
+        #endregion
 
         #region Рандомное заполнение
 
@@ -501,6 +708,9 @@ namespace BankingSystem
             }
         } // заполнение сотрудниками
         #endregion
+
+        #region Сериализация
+
         private Department<Juridical> JuridJsonDeserialize()
         {
             string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
@@ -531,6 +741,7 @@ namespace BankingSystem
             var json2 = JsonConvert.SerializeObject(bank.DepItems[2] as Department<VIPClient>);
             File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\VIP.json", json2);
         }
+        #endregion
 
         private void ClickInfo() // выполняется при нажатии на кнопку информации
         {

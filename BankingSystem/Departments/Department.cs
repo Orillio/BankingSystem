@@ -4,10 +4,12 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PropertyChanged;
 
 namespace BankingSystem
 {
     public class BaseDepartment { }
+    [AddINotifyPropertyChangedInterface]
     class Department<T> : BaseDepartment
         where T : AbstractClient
     {
