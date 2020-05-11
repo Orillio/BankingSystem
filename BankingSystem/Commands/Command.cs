@@ -11,9 +11,14 @@ namespace BankingSystem
     class Command : ICommand
     {
         Action mAction;
+        Action<object> oneParamAction;
         public Command(Action action)
         {
             this.mAction = action;
+        }
+        public Command(Action<object> action)
+        {
+            this.oneParamAction = action;
         }
 
         public bool CanExecute(object parameter)
@@ -23,7 +28,8 @@ namespace BankingSystem
 
         public void Execute(object parameter)
         {
-            mAction();
+            mAction?.Invoke();
+            oneParamAction?.Invoke(parameter);
         }
 
         public event EventHandler CanExecuteChanged;
