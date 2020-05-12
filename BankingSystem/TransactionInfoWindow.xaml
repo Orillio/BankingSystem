@@ -1,0 +1,50 @@
+﻿<Window x:Class="BankingSystem.TransactionInfoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BankingSystem"
+        mc:Ignorable="d"
+        Title="TransactionInfoWindow" Height="450" Width="800"
+        MinHeight="450" MinWidth="800"
+        MaxHeight="450" MaxWidth="800"
+        WindowStartupLocation="CenterScreen">
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="Информация о транзакциях" FontSize="15" TextAlignment="Center" Margin="0 0 0 5"/>
+        <ListView ItemsSource="{Binding Transactions}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn>
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Margin="0 0 5 0" Text="{Binding NameTarget}"/>
+                                    <TextBlock Margin="0 0 5 0" Text="{Binding LastnameTarget}"/>
+                                    <TextBlock Text="{Binding PatronymicTarget}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                        <GridViewColumnHeader Width="220">Клиент</GridViewColumnHeader>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding CardTarget, StringFormat=\{0:#### #### #### ####\}}">
+                        <GridViewColumnHeader Width="170">Карта</GridViewColumnHeader>
+                    </GridViewColumn>
+                    <GridViewColumn>
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={x:Static local:TransactionInfoConverter.Instance}, ConverterParameter=Client}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                        <GridViewColumnHeader Width="140">Тип клиента</GridViewColumnHeader>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding Converter={x:Static local:TransactionInfoConverter.Instance}, ConverterParameter=Type}">
+                        <GridViewColumnHeader Width="150">Тип транзакции</GridViewColumnHeader>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding TransactionSum}">
+                        <GridViewColumnHeader Width="100">Сумма</GridViewColumnHeader>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </StackPanel>
+</Window>

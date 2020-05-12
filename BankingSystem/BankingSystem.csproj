@@ -67,11 +67,13 @@
     <Compile Include="AddClientWindow.xaml.cs">
       <DependentUpon>AddClientWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ClientClasses\TransactionInfo.cs" />
     <Compile Include="ClientInfoWindow.xaml.cs">
       <DependentUpon>ClientInfoWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Commands\Command.cs" />
     <Compile Include="Converter\InvestmentPropertiesConverter.cs" />
+    <Compile Include="Converter\TransactionInfoConverter.cs" />
     <Compile Include="Departments\Department.cs" />
     <Compile Include="Converter\InvestmentConverter.cs" />
     <Compile Include="DepositWindow.xaml.cs">
@@ -82,6 +84,9 @@
     </Compile>
     <Compile Include="InvestCreateWindow.xaml.cs">
       <DependentUpon>InvestCreateWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="TransactionInfoWindow.xaml.cs">
+      <DependentUpon>TransactionInfoWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="TransferWindow.xaml.cs">
       <DependentUpon>TransferWindow.xaml</DependentUpon>
@@ -121,11 +126,15 @@
     <Compile Include="Clients\Individual.cs" />
     <Compile Include="Clients\Juridical.cs" />
     <Compile Include="Converter\CardConverter.cs" />
-    <Compile Include="Investment\Investment.cs" />
+    <Compile Include="ClientClasses\Investment.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="TransactionInfoWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="TransferWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -5,7 +5,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,9 +12,13 @@ using Newtonsoft.Json;
 
 namespace BankingSystem
 {
-    enum OrderType { Name, NameDesc, Lastname, LastnameDesc, Age, AgeDesc, Balance, BalanceDesc }
     class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
+        #region События
+        public event Action<TransactionInfo> OnPayment;
+        public event Action<TransactionInfo> OnReceive;
+        #endregion
+
         #region Рандом
         public static Random Random { get; set; } = new Random();
 
@@ -32,6 +35,7 @@ namespace BankingSystem
         private DepositWindow Deposit { get; set; }
         private AddClientWindow AddClient { get; set; }
         private EditClientWindow EditClient { get; set; }
+        private TransactionInfoWindow TransactionInfo { get; set; }
         #endregion
 
         #region Переданные данные через View
@@ -70,6 +74,7 @@ namespace BankingSystem
         bool agedesc = false;
         bool balancedesc = false;
         #endregion
+        
 
         #region Конструктор
         public Bank()
@@ -156,16 +161,18 @@ namespace BankingSystem
                 if (SelectedClient.BankBalance < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства: {SelectedClient.BankBalance}$"); return; }
 
                 #endregion
-
                 MessageBoxResult res;
                 long newsum = 0;
+                OnPayment += SelectedClient.Transaction;
+                OnReceive += client.Transaction;
                 switch (SelectedClient.ClientType)
                 {
                     case ClientType.VIP:
-                        res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {sum}$", "Информация", MessageBoxButton.YesNo);
+                        newsum = sum;
+                        res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {newsum}$", "Информация", MessageBoxButton.YesNo);
                         if (res != MessageBoxResult.Yes) return;
-                        SelectedClient.BankBalance -= sum;
-                        client.BankBalance += sum;
+                        SelectedClient.BankBalance -= newsum;
+                        client.BankBalance += newsum;
                         break;
                     case ClientType.Individual:
                         newsum = sum + (sum / 100 * 3);
@@ -185,7 +192,16 @@ namespace BankingSystem
                         break;
                 }
                 Transfer.Close();
+                var c = SelectedClient;
+                var payment = new TransactionInfo(client.FirstName, client.LastName, client.Patronymic, client.CardNumber, 
+                    -sum, client.ClientType) { Type = TransactionType.Payment };
+                var receiver = new TransactionInfo(c.FirstName, c.LastName, c.Patronymic, c.CardNumber,
+                    newsum, c.ClientType) {Type = TransactionType.Receive };
+                OnPayment?.Invoke(payment);
+                OnReceive?.Invoke(receiver);
                 JsonSerialize(this);
+                OnPayment -= SelectedClient.Transaction;
+                OnReceive -= client.Transaction;
                 MessageBox.Show("Перевод завершен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Asterisk);
             }); // перевод средств на другой счет
             DepositButton = new Command(() =>
@@ -523,12 +539,14 @@ namespace BankingSystem
                     }
                 }
             });
-            TransferInfo = new Command(obj =>
+            TransferInfo = new Command(e =>
             {
-
+                var client = e as AbstractClient;
+                TransactionInfo = new TransactionInfoWindow();
+                TransactionInfo.DataContext = client;
+                TransactionInfo.Show();
             });
             #endregion
-
         }
         #endregion
 
@@ -778,9 +796,6 @@ namespace BankingSystem
 
 
         }
-
-
-
         private bool CheckCardNumber(long cardnumber, out AbstractClient client)
         {
             foreach (var item in (DepItems[0] as Department<Juridical>).Clients)
