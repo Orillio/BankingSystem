@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using PropertiesChangedLib;
+using static EnumsLib.Enums;
 
 namespace BankingSystem
 {

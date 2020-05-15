@@ -6,10 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Documents;
 using PropertiesChangedLib;
-using static EnumsLib.Enums;
 
 namespace BankingSystem
 {
+    #region Enums
+    public enum InvestmentType { Capitalization, NotCapitalization } // Тип инвестиции
+    public enum ClientType { VIP, Individual, Juridical } // Тип клиента
+    #endregion
+
     public class Investment : PropertiesChanged
     {
         #region Private fields

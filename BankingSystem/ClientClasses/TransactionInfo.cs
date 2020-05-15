@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PropertiesChangedLib;
+using static EnumsLib.Enums;
 
 namespace BankingSystem
 {
