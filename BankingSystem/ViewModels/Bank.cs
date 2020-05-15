@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ComandLib;
+using InvestmentLib;
 using Newtonsoft.Json;
 using PropertiesChangedLib;
 using static EnumsLib.Enums;
@@ -76,7 +77,7 @@ namespace BankingSystem
         #endregion
         
 
-        #region Конструктор
+        #region Конструктор 
         public Bank()
         {
             #region Инициализация отделов

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{934FC82C-4EC2-47E5-945C-CB974C51EDC7}</ProjectGuid>
+    <ProjectGuid>{CCB79FF2-DFC2-4B4F-B192-FD387F56E426}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>InvestmentLib</RootNamespace>
@@ -45,6 +45,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EnumsLib\EnumsLib.csproj">
+      <Project>{ea085702-4d9f-408d-84f4-9528c67b9560}</Project>
+      <Name>EnumsLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PropertiesChangedLib\PropertiesChangedLib.csproj">
       <Project>{d5250aa0-57c0-45d1-9760-5ade89505968}</Project>
       <Name>PropertiesChangedLib</Name>

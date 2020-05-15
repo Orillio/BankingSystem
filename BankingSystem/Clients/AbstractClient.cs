@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using InvestmentLib;
 using PropertiesChangedLib;
 using static EnumsLib.Enums;
 

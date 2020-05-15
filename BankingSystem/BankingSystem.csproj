@@ -124,7 +124,6 @@
     <Compile Include="Clients\Individual.cs" />
     <Compile Include="Clients\Juridical.cs" />
     <Compile Include="Converter\CardConverter.cs" />
-    <Compile Include="ClientClasses\Investment.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -192,6 +191,10 @@
     <ProjectReference Include="..\EnumsLib\EnumsLib.csproj">
       <Project>{ea085702-4d9f-408d-84f4-9528c67b9560}</Project>
       <Name>EnumsLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\InvestmentLib\InvestmentLib.csproj">
+      <Project>{ccb79ff2-dfc2-4b4f-b192-fd387f56e426}</Project>
+      <Name>InvestmentLib</Name>
     </ProjectReference>
     <ProjectReference Include="..\PropertiesChangedLib\PropertiesChangedLib.csproj">
       <Project>{d5250aa0-57c0-45d1-9760-5ade89505968}</Project>
