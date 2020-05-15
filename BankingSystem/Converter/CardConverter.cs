@@ -15,7 +15,7 @@ namespace BankingSystem
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             long cardnum = (long)value;
-            return string.Format("{0:#### #### #### ####}", cardnum);
+            return $"{cardnum:#### #### #### ####}";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

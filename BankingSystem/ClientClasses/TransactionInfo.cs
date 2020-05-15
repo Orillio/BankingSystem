@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PropertiesChangedLib;
 
 namespace BankingSystem
 {
@@ -14,7 +15,6 @@ namespace BankingSystem
         public string PatronymicTarget { get; set; }
         public long CardTarget { get; set; }
         public ClientType ClientTypeTarget { get; set; }
-        public long TransactionSumWithPercent { get; set; }
         public long TransactionSum { get; set; }
         public TransactionType Type { get; set; }
         public TransactionInfo(string name, string last, string patr, long card, long sum, ClientType cltype)

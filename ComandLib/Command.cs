@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows.Media.TextFormatting;
 
-namespace BankingSystem
+namespace ComandLib
 {
-    class Command : ICommand
+    public class Command : ICommand
     {
         Action mAction;
         Action<object> oneParamAction;

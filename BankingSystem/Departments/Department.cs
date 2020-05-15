@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PropertyChanged;
+﻿using System.Collections.ObjectModel;
+using PropertiesChangedLib;
 
 namespace BankingSystem
 {
-    public class BaseDepartment { }
-    [AddINotifyPropertyChangedInterface]
-    class Department<T> : BaseDepartment
+    public class BaseDepartment : PropertiesChanged { }
+    public class Department<T> : BaseDepartment
         where T : AbstractClient
     {
         public string Name { get; set; }
