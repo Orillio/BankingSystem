@@ -27,7 +27,6 @@ namespace BankingSystem
             this.Age = age;
             this.Investment = null;
             this.BankBalance = 0;
-            this.CardNumber = long.Parse(Bank.CardRandom());
         }
         public void Transaction(TransactionInfo e) => Transactions.Add(e);
     }

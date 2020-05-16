@@ -20,7 +20,7 @@
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <ListBox>
-            
+
         </ListBox>
         <Border BorderBrush="Gray" BorderThickness="1">
             <Grid>
@@ -42,7 +42,7 @@
                 <TextBlock Text="Действия" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" VerticalAlignment="Center"/>
             </Border>
         </Grid>
-        
+
         <!--Действия с клиентами-->
         <Border Grid.Row="2" Grid.Column="0" BorderBrush="Gray" BorderThickness="1">
             <StackPanel Margin="15">
@@ -85,7 +85,7 @@
                 </Button>
             </StackPanel>
         </Border>
-        
+
         <!--Информация о клиенте-->
         <Grid Grid.Row="2" Grid.Column="1">
             <Grid.ColumnDefinitions>
@@ -102,17 +102,17 @@
                         <TextBlock FontSize="15" Margin="0,0,5,0" Text="{Binding ElementName=Clients, Path=SelectedItem.LastName}"/>
                         <TextBlock FontSize="15" Text="{Binding ElementName=Clients, Path=SelectedItem.Patronymic}"/>
                     </StackPanel>
-                    
+
                     <!--Номер карты клиента-->
                     <StackPanel Margin="5,0,0,5" Height="25" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Margin="0,0,5,0" Text="Номер карты: "/>
                         <TextBlock x:Name="CardNumberField" FontSize="15" Text="{Binding ElementName=Clients,
                             Path=SelectedItem.CardNumber, Converter={x:Static local:CardConverter.Instance}}"/>
                     </StackPanel>
-                    
+
                     <!--Информация о вкладе-->
                     <StackPanel Margin="0 0 0 5" Height="30" VerticalAlignment="Top" Orientation="Horizontal">
-                        
+
                         <!--Кнопка информации-->
                         <Button Margin="5 0 10 0" Width="165" Height="30" Cursor="Hand" Command="{Binding InfoClick}">
                             <Button.Template>
@@ -132,14 +132,14 @@
                                    Text="{Binding ElementName=Clients, Path=SelectedItem.Investment, Converter={x:Static local:InvestmentConverter.Instance}}"/>
 
                     </StackPanel>
-                    
+
                     <!--Информация о балансе-->
                     <StackPanel Margin="5,0,0,5" Height="20" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Text="Баланс:  $"/>
                         <TextBlock FontSize="15" Text="{Binding ElementName=Clients,
                             Path=SelectedItem.BankBalance}"/>
                     </StackPanel>
-                    
+
                 </StackPanel>
             </Border>
 
@@ -182,11 +182,15 @@
 
         <!--Список клиентов-->
         <Grid Grid.Row="0" Grid.Column="1">
-            <Border BorderThickness="1" BorderBrush="gray">
-                <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Name}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
-            </Border>
-            <ListView Margin="0 50 0 0" x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
-                      ItemsSource="{Binding ElementName=Deps, Path=SelectedItem.Clients}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Name}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
+
+            <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
+                      ItemsSource="{Binding ElementName=Deps, Path=SelectedItem.Clients}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>

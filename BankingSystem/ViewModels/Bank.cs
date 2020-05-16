@@ -1,15 +1,19 @@
-﻿using System;
+﻿using ComandLib;
+using InvestmentLib;
+using MyExceptionsLib;
+using Newtonsoft.Json;
+using PropertiesChangedLib;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using ComandLib;
-using InvestmentLib;
-using Newtonsoft.Json;
-using PropertiesChangedLib;
-using MyExceptionsLib;
 using TransactionLib;
 using static EnumsLib.Enums;
 
@@ -23,8 +27,10 @@ namespace BankingSystem
         #endregion
 
         #region Рандом
-        public static Random Random { get; set; } = new Random();
-
+        public static Random Random = new Random(123);
+        public static Random JurRandom = new Random(323);
+        public static Random IndRandom = new Random(2443);
+        public static Random VipRandom = new Random(2343);
         #endregion
 
         #region Коллекция отделов
@@ -39,6 +45,7 @@ namespace BankingSystem
         private AddClientWindow AddClient { get; set; }
         private EditClientWindow EditClient { get; set; }
         private TransactionInfoWindow TransactionInfo { get; set; }
+        public LoadingScreen Load { get; set; }
         #endregion
 
         #region Переданные данные через View
@@ -74,10 +81,9 @@ namespace BankingSystem
         #region Дополнительные переменные для сортировки
         bool namedesc = false;
         bool lastdesc = false;
-        bool agedesc = false;
+        bool patrdesc = false;
         bool balancedesc = false;
         #endregion
-        
 
         #region Конструктор 
         public Bank()
@@ -92,20 +98,32 @@ namespace BankingSystem
 
             #endregion
 
-            #region Десериализация
+            #region Десериализация и заполнение
 
             string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             if (File.Exists($@"{path}\BankLogs\Juridical.json") && File.Exists($@"{path}\BankLogs\Individual.json") && File.Exists($@"{path}\BankLogs\VIP.json"))
             {
-                DepItems[0] = JuridJsonDeserialize();
-                DepItems[1] = IndivJsonDeserialize();
-                DepItems[2] = VIPJsonDeserialize();
+                var task1 = Task.Run(() =>
+                {
+                    DepItems[0] = JuridJsonDeserialize();
+                });
+                var task2 = Task.Run(() =>
+                {
+                    DepItems[1] = IndivJsonDeserialize();
+                });
+                var task3 = Task.Run(() =>
+                {
+                    DepItems[2] = VIPJsonDeserialize();
+                });
+                Task.WaitAll(task1, task2, task3);
             }
             else
             {
-                FillClients(10);
+                var t1 = DateTime.Now;
+                FillClients(200000);
+
                 this.JsonSerializer();
-            }    
+            }
             #endregion
 
             #region Команды
@@ -121,7 +139,6 @@ namespace BankingSystem
                 Info.Close();
                 this.JsonSerializer();
 
-                MessageBox.Show("Вы вывели вклад на свой счет.", "", MessageBoxButton.OK, MessageBoxImage.Information);
             }); // вывод средств из вклада на счет
             InvestmentButton = new Command(() =>
             {
@@ -140,13 +157,12 @@ namespace BankingSystem
                 SelectedClient.BankBalance = SelectedClient.BankBalance - result;
                 CreateInvest.Close();
                 this.JsonSerializer();
-                MessageBox.Show("Вклад оформлен!");
             }); // окно открытия вклада
             TransferButton = new Command(() =>
             {
                 if (this.Transfer != null) return;
                 if (SelectedClient == null) return;
-                if (SelectedClient.BankBalance <= 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
+                if (SelectedClient.BankBalance < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
                 Transfer = new TransferWindow();
                 Transfer.Closed += (sender, e) => { this.Transfer = null; };
                 Transfer.DataContext = this;
@@ -155,8 +171,7 @@ namespace BankingSystem
             TransferButtonWindow = new Command(() =>
             {
                 var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
-                string card = null;
-                foreach (var item in enumcard) card += item; // Извлекаю элементы из последовательности
+                string card = enumcard.Aggregate<char, string>(null, (current, item) => current + item);
 
                 #region Обратные условия
 
@@ -199,16 +214,15 @@ namespace BankingSystem
                 }
                 Transfer.Close();
                 var c = SelectedClient;
-                var payment = new TransactionInfo(client.FirstName, client.LastName, client.Patronymic, client.CardNumber, 
-                    -sum, client.ClientType) { Type = TransactionType.Payment };
+                var payment = new TransactionInfo(client.FirstName, client.LastName, client.Patronymic, client.CardNumber,
+                    -newsum, client.ClientType) { Type = TransactionType.Payment };
                 var receiver = new TransactionInfo(c.FirstName, c.LastName, c.Patronymic, c.CardNumber,
-                    newsum, c.ClientType) {Type = TransactionType.Receive };
+                    sum, c.ClientType) { Type = TransactionType.Receive };
                 OnPayment?.Invoke(payment);
                 OnReceive?.Invoke(receiver);
-                this.JsonSerializer();
                 OnPayment -= SelectedClient.Transaction;
                 OnReceive -= client.Transaction;
-                MessageBox.Show("Перевод завершен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+                this.JsonSerializer();
             }); // перевод средств на другой счет
             DepositButton = new Command(() =>
             {
@@ -234,7 +248,6 @@ namespace BankingSystem
                 SelectedClient.BankBalance += result;
                 Deposit.Close();
                 this.JsonSerializer();
-                MessageBox.Show("Баланс пополнен!");
             }); // пополнение счета 
             AddClientButton = new Command(() =>
             {
@@ -255,22 +268,24 @@ namespace BankingSystem
                 AbstractClient newClient = null;
                 if (SelectedClientType.Tag.Equals("VIP"))
                 {
-                    newClient = new VIPClient(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
+                    newClient = new VIPClient(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text))
+                    { CardNumber = long.Parse(CardRandom(VipRandom)) };
                     newClient.AddTo(DepItems[2] as Department<VIPClient>);
                 }
                 else if (SelectedClientType.Tag.Equals("Indiv"))
                 {
-                    newClient = new Individual(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Name.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
+                    newClient = new Individual(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Name.Text, ClientType.VIP, int.Parse(AddClient.Age.Text))
+                    { CardNumber = long.Parse(CardRandom(IndRandom)) };
                     newClient.AddTo(DepItems[1] as Department<Individual>);
                 }
                 else
                 {
-                    newClient = new Juridical(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
+                    newClient = new Juridical(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text))
+                    { CardNumber = long.Parse(CardRandom(JurRandom)) };
                     newClient.AddTo(DepItems[0] as Department<Juridical>);
                 }
                 AddClient.Close();
                 this.JsonSerializer();
-                MessageBox.Show("Клиент добавлен!");
 
             }); // добавление клиента
             EditClientButton = new Command(() =>
@@ -293,7 +308,7 @@ namespace BankingSystem
                 if (EditSelectedClientType != null)
                 {
                     ClientType cltype = EditSelectedClientType.Tag.Equals("VIP") ? ClientType.VIP : EditSelectedClientType.Tag.Equals("Indiv") ? ClientType.Individual : ClientType.Juridical;
-                    if (SelectedClient.ClientType == cltype) { EditClient.Close(); MessageBox.Show("Клиент изменен"); return; }
+                    if (SelectedClient.ClientType == cltype) { EditClient.Close(); this.JsonSerializer(); return; }
                     else
                     {
                         var c = SelectedClient;
@@ -302,17 +317,17 @@ namespace BankingSystem
                             case ClientType.VIP:
 
                                 var vip = new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.VIP, c.Age)
-                                { BankBalance = c.BankBalance, Investment = c.Investment };
+                                { BankBalance = c.BankBalance, Investment = c.Investment, CardNumber = c.CardNumber };
                                 vip.AddTo(DepItems[2] as Department<VIPClient>);
                                 break;
                             case ClientType.Individual:
-                                var ind = new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.Individual, c.Age)
-                                { BankBalance = c.BankBalance, Investment = c.Investment };
+                                var ind = new Individual(c.FirstName, c.LastName, c.Patronymic, ClientType.Individual, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment, CardNumber = c.CardNumber };
                                 ind.AddTo(DepItems[1] as Department<Individual>);
                                 break;
                             case ClientType.Juridical:
-                                var jur = new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.Juridical, c.Age)
-                                { BankBalance = c.BankBalance, Investment = c.Investment };
+                                var jur = new Juridical(c.FirstName, c.LastName, c.Patronymic, ClientType.Juridical, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment, CardNumber = c.CardNumber };
                                 jur.AddTo(DepItems[0] as Department<Juridical>);
                                 break;
                             default:
@@ -337,11 +352,10 @@ namespace BankingSystem
                         }
                         EditClient.Close();
                         this.JsonSerializer();
-                        MessageBox.Show("Клиент изменен");
-                        return;
+
                     }
                 }
-                else { EditClient.Close(); MessageBox.Show("Клиент изменен"); return; }
+                else { EditClient.Close(); this.JsonSerializer(); return; }
             }); // изменение клиента
             DeleteClient = new Command(() =>
             {
@@ -366,196 +380,233 @@ namespace BankingSystem
                         break;
                 }
                 this.JsonSerializer();
-                MessageBox.Show("Клиент удален");
             });
             NameClick = new Command(() =>
             {
-                if (SelectedDepartment is Department<VIPClient>)
+                Load = new LoadingScreen();
+                Load.Show();
+                lastdesc = false;
+                patrdesc = false;
+                balancedesc = false;
+                Thread th = new Thread(() =>
                 {
-                    var c = (DepItems[2] as Department<VIPClient>).Clients;
-                    if (!namedesc)
+                    if (SelectedDepartment is Department<VIPClient>)
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.FirstName));
-                        namedesc = true;
+                        var c = (DepItems[2] as Department<VIPClient>).Clients;
+                        if (!namedesc)
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.FirstName, true);
+                            namedesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.FirstName, false);
+                            namedesc = false;
+                        }
+                    }
+                    else if (SelectedDepartment is Department<Individual>)
+                    {
+                        var c = (DepItems[1] as Department<Individual>).Clients;
+                        if (!namedesc)
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.FirstName, true);
+                            namedesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.FirstName, false);
+                            namedesc = false;
+                        }
                     }
                     else
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.FirstName));
-                        namedesc = false;
-                    }
-                }
-                else if (SelectedDepartment is Department<Individual>)
-                {
-                    var c = (DepItems[1] as Department<Individual>).Clients;
-                    if (!namedesc)
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.FirstName));
-                        namedesc = true;
-                    }
-                    else
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.FirstName));
-                        namedesc = false;
+                        var c = (DepItems[0] as Department<Juridical>).Clients;
+                        if (!namedesc)
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.FirstName, true);
+                            namedesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.FirstName, false);
+                            namedesc = false;
 
+                        }
                     }
-                }
-                else
-                {
-                    var c = (DepItems[0] as Department<Juridical>).Clients;
-                    if (!namedesc)
-                    {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.FirstName));
-                        namedesc = true;
-                    }
-                    else
-                    {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.FirstName));
-                        namedesc = false;
-
-                    }
-                }
-                
+                    Application.Current.Dispatcher.Invoke(() => Load.Close());
+                });
+                th.Start();
             });
             LastClick = new Command(() =>
             {
-                if (SelectedDepartment is Department<VIPClient>)
+                Load = new LoadingScreen();
+                Load.Show();
+                namedesc = false;
+                patrdesc = false;
+                balancedesc = false;
+                var th = new Thread(() =>
                 {
-                    var c = (DepItems[2] as Department<VIPClient>).Clients;
-                    if (!lastdesc)
+                    if (SelectedDepartment is Department<VIPClient>)
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.LastName));
-                        lastdesc = true;
+                        var c = (DepItems[2] as Department<VIPClient>).Clients;
+                        if (!lastdesc)
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.LastName, true);
+                            lastdesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.LastName, false);
+                            lastdesc = false;
+                        }
                     }
-                    else
+                    else if (SelectedDepartment is Department<Individual>)
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.LastName));
-                        lastdesc = false;
-                    }
-                }
-                else if (SelectedDepartment is Department<Individual>)
-                {
-                    var c = (DepItems[1] as Department<Individual>).Clients;
-                    if (!lastdesc)
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.LastName));
-                        lastdesc = true;
-                    }
-                    else
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.LastName));
-                        lastdesc = false;
+                        var c = (DepItems[1] as Department<Individual>).Clients;
+                        if (!lastdesc)
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.LastName, true);
+                            lastdesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.LastName, false);
+                            namedesc = false;
 
-                    }
-                }
-                else
-                {
-                    var c = (DepItems[0] as Department<Juridical>).Clients;
-                    if (!lastdesc)
-                    {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.LastName));
-                        lastdesc = true;
+                        }
                     }
                     else
                     {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.LastName));
-                        lastdesc = false;
+                        var c = (DepItems[0] as Department<Juridical>).Clients;
+                        if (!lastdesc)
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.LastName, true);
+                            lastdesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.LastName, false);
+                            lastdesc = false;
 
+                        }
                     }
-                }
+                    Application.Current.Dispatcher.Invoke(() => Load.Close());
+                });
+                th.Start();
             });
             PatrClick = new Command(() =>
             {
-                if (SelectedDepartment is Department<VIPClient>)
+                Load = new LoadingScreen();
+                Load.Show();
+                namedesc = false;
+                lastdesc = false;
+                balancedesc = false;
+                Thread th = new Thread(() =>
                 {
-                    var c = (DepItems[2] as Department<VIPClient>).Clients;
-                    if (!agedesc)
+                    if (SelectedDepartment is Department<VIPClient>)
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.Age));
-                        agedesc = true;
+                        var c = (DepItems[2] as Department<VIPClient>).Clients;
+                        if (!patrdesc)
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.Patronymic, true);
+                            patrdesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.Patronymic, false);
+                            patrdesc = false;
+                        }
                     }
-                    else
+                    else if (SelectedDepartment is Department<Individual>)
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.Age));
-                        agedesc = false;
-                    }
-                }
-                else if (SelectedDepartment is Department<Individual>)
-                {
-                    var c = (DepItems[1] as Department<Individual>).Clients;
-                    if (!agedesc)
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.Age));
-                        agedesc = true;
-                    }
-                    else
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.Age));
-                        agedesc = false;
+                        var c = (DepItems[1] as Department<Individual>).Clients;
+                        if (!patrdesc)
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.Patronymic, true);
+                            patrdesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.Patronymic, false);
+                            patrdesc = false;
 
-                    }
-                }
-                else
-                {
-                    var c = (DepItems[0] as Department<Juridical>).Clients;
-                    if (!agedesc)
-                    {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.Age));
-                        agedesc = true;
+                        }
                     }
                     else
                     {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.Age));
-                        agedesc = false;
+                        var c = (DepItems[0] as Department<Juridical>).Clients;
+                        if (!patrdesc)
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.Patronymic, true);
+                            patrdesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.Patronymic, false);
+                            patrdesc = false;
 
+                        }
                     }
-                }
+                    Application.Current.Dispatcher.Invoke(() => Load.Close());
+                });
+                th.Start();
             });
             BalanceClick = new Command(() =>
             {
-                if (SelectedDepartment is Department<VIPClient>)
+                Load = new LoadingScreen();
+                Load.Show();
+                namedesc = false;
+                lastdesc = false;
+                patrdesc = false;
+                Thread th = new Thread(() =>
                 {
-                    var c = (DepItems[2] as Department<VIPClient>).Clients;
-                    if (!balancedesc)
+                    if (SelectedDepartment is Department<VIPClient>)
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderBy(x => x.BankBalance));
-                        balancedesc = true;
+                        var c = (DepItems[2] as Department<VIPClient>).Clients;
+                        if (!balancedesc)
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.BankBalance, true);
+                            balancedesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[2] as Department<VIPClient>).Order(x => x.BankBalance, false);
+                            balancedesc = false;
+                        }
                     }
-                    else
+                    else if (SelectedDepartment is Department<Individual>)
                     {
-                        (DepItems[2] as Department<VIPClient>).Clients = new ObservableCollection<VIPClient>(c.OrderByDescending(x => x.BankBalance));
-                        balancedesc = false;
-                    }
-                }
-                else if (SelectedDepartment is Department<Individual>)
-                {
-                    var c = (DepItems[1] as Department<Individual>).Clients;
-                    if (!balancedesc)
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderBy(x => x.BankBalance));
-                        balancedesc = true;
-                    }
-                    else
-                    {
-                        (DepItems[1] as Department<Individual>).Clients = new ObservableCollection<Individual>(c.OrderByDescending(x => x.BankBalance));
-                        balancedesc = false;
+                        var c = (DepItems[1] as Department<Individual>).Clients;
+                        if (!balancedesc)
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.BankBalance, true);
+                            balancedesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[1] as Department<Individual>).Order(x => x.BankBalance, false);
+                            balancedesc = false;
 
-                    }
-                }
-                else
-                {
-                    var c = (DepItems[0] as Department<Juridical>).Clients;
-                    if (!balancedesc)
-                    {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderBy(x => x.BankBalance));
-                        balancedesc = true;
+                        }
                     }
                     else
                     {
-                        (DepItems[0] as Department<Juridical>).Clients = new ObservableCollection<Juridical>(c.OrderByDescending(x => x.BankBalance));
-                        balancedesc = false;
+                        var c = (DepItems[0] as Department<Juridical>).Clients;
+                        if (!balancedesc)
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.BankBalance, true);
+                            balancedesc = true;
+                        }
+                        else
+                        {
+                            (DepItems[0] as Department<Juridical>).Order(x => x.BankBalance, false);
+                            balancedesc = false;
 
+                        }
                     }
-                }
+                    Application.Current.Dispatcher.Invoke(() => Load.Close());
+                });
+                th.Start();
             });
             TransferInfo = new Command(e =>
             {
@@ -565,15 +616,16 @@ namespace BankingSystem
                 TransactionInfo.Show();
             });
             #endregion
+
         }
         #endregion
 
         #region Рандомное заполнение
 
-        private string ClientRep(int type)
+        private string ClientRep(int type, Random random)
         {
             if (type == 0)
-                switch (Random.Next(0, 31))
+                switch (random.Next(0, 31))
                 {
                     case 0: return "Филипп";
                     case 1: return "Харитон";
@@ -609,7 +661,7 @@ namespace BankingSystem
                         return "Игнатий";
                 }
             else if (type == 1)
-                switch (Random.Next(0, 31))
+                switch (random.Next(0, 31))
                 {
                     case 0: return "Чернов";
                     case 1: return "Носков";
@@ -645,7 +697,7 @@ namespace BankingSystem
                         return "Гамула";
                 }
             else if (type == 2)
-                switch (Random.Next(0, 31))
+                switch (random.Next(0, 31))
                 {
                     case 0: return "Алексеевич";
                     case 1: return "Андреевич";
@@ -713,9 +765,9 @@ namespace BankingSystem
             }
             return null;
         } // рандомная информация о вкладе
-        public static string CardRandom()
+        public static string CardRandom(Random random)
         {
-            string longrandom = Random.Next(1_000_000_000, int.MaxValue).ToString() + Random.Next(1_000_000_000, int.MaxValue).ToString();
+            string longrandom = random.Next(1_000_000_000, int.MaxValue).ToString() + random.Next(1_000_000_000, int.MaxValue).ToString();
             longrandom = longrandom.Substring(longrandom.Length - 16);
             if (longrandom[0] == '0')
             {
@@ -723,7 +775,7 @@ namespace BankingSystem
                 longrandom = longrandom.TrimStart('0');
                 while(a != longrandom.Length)
                 {
-                    longrandom += Random.Next(1, 10).ToString();
+                    longrandom += random.Next(1, 10).ToString();
                 }
                 return longrandom;
             }
@@ -731,26 +783,40 @@ namespace BankingSystem
         }
         public void FillClients(int count)
         {
-            for (int i = 0; i < count; i++)
+            var task1 = Task.Run(() =>
             {
-                (DepItems[0] as Department<Juridical>).Clients.Add(new Juridical(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.Juridical, Random.Next(18, 40))
-                { Investment = RandomInvest(ClientType.VIP), BankBalance = Random.Next(10, 100000), CardNumber = long.Parse(CardRandom()) });
-            }
-            for (int i = 0; i < count; i++)
+                for (int i = 0; i < count; i++)
+                {
+                    (DepItems[0] as Department<Juridical>).Clients.Add(new Juridical(ClientRep(0, JurRandom), ClientRep(1, JurRandom), ClientRep(2, JurRandom),
+                            ClientType.Juridical, JurRandom.Next(18, 40))
+                    { Investment = RandomInvest(ClientType.Juridical), BankBalance = JurRandom.Next(10, 100000), CardNumber = long.Parse(CardRandom(JurRandom)) });
+                }
+            });
+            var task2 = Task.Run(() =>
             {
-               (DepItems[1] as Department<Individual>).Clients.Add(new Individual(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.Individual, Random.Next(18, 40))
-               { Investment = RandomInvest(ClientType.VIP), BankBalance = Random.Next(10, 100000), CardNumber = long.Parse(CardRandom()) });
-            }
-            for (int i = 0; i < count; i++)
+                for (int i = 0; i < count; i++)
+                {
+                    (DepItems[1] as Department<Individual>).Clients.Add(new Individual(ClientRep(0, IndRandom), ClientRep(1, IndRandom), ClientRep(2, IndRandom),
+                            ClientType.Individual, IndRandom.Next(18, 40))
+                    { Investment = RandomInvest(ClientType.Individual), BankBalance = IndRandom.Next(10, 100000), CardNumber = long.Parse(CardRandom(IndRandom)) });
+                }
+
+            });
+            var task3 = Task.Run(() =>
             {
-                (DepItems[2] as Department<VIPClient>).Clients.Add(new VIPClient(ClientRep(0), ClientRep(1), ClientRep(2), ClientType.VIP, Random.Next(18, 40))
-                { Investment = RandomInvest(ClientType.VIP), BankBalance = Random.Next(10, 100000), CardNumber = long.Parse(CardRandom()) });
-                
-            }
-        } // заполнение сотрудниками
+                for (int i = 0; i < count; i++)
+                {
+                    (DepItems[2] as Department<VIPClient>).Clients.Add(new VIPClient(ClientRep(0, VipRandom), ClientRep(1, VipRandom), ClientRep(2, VipRandom),
+                            ClientType.VIP, VipRandom.Next(18, 40))
+                    { Investment = RandomInvest(ClientType.VIP), BankBalance = VipRandom.Next(10, 100000), CardNumber = long.Parse(CardRandom(VipRandom)) });
+                }
+            });
+            Task.WaitAll(task1, task2, task3);
+
+        }
         #endregion
 
-        #region Сериализация
+        #region Десериализация
 
         private Department<Juridical> JuridJsonDeserialize()
         {

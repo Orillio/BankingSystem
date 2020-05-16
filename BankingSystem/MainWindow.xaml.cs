@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Media;
 
 namespace BankingSystem
 {
@@ -11,7 +12,6 @@ namespace BankingSystem
         {
             InitializeComponent();
             DataContext = new Bank();
-
         }
     }
 }

@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyExceptionsLib", "MyExcept
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientClassesLib", "ClientClassesLib\ClientClassesLib.csproj", "{B32FBFD3-B73A-4BF0-BF33-FE3D66B1B4E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiThreadTest", "MultiThreadTest\MultiThreadTest.csproj", "{DFA86F0B-80F4-48E8-AEE6-14D7CEBAB5D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{B32FBFD3-B73A-4BF0-BF33-FE3D66B1B4E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B32FBFD3-B73A-4BF0-BF33-FE3D66B1B4E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B32FBFD3-B73A-4BF0-BF33-FE3D66B1B4E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFA86F0B-80F4-48E8-AEE6-14D7CEBAB5D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFA86F0B-80F4-48E8-AEE6-14D7CEBAB5D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFA86F0B-80F4-48E8-AEE6-14D7CEBAB5D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFA86F0B-80F4-48E8-AEE6-14D7CEBAB5D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
