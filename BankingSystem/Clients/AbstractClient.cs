@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using InvestmentLib;
 using PropertiesChangedLib;
+using TransactionLib;
 using static EnumsLib.Enums;
 
 namespace BankingSystem

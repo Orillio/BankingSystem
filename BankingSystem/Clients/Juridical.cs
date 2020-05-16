@@ -7,7 +7,7 @@ using static EnumsLib.Enums;
 
 namespace BankingSystem
 {
-    class Juridical : AbstractClient
+    public class Juridical : AbstractClient
     {
         public Juridical(string name, string lastname, string patronymic, ClientType type, int age)
             : base(name, lastname, patronymic, type, age)

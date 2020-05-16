@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{CCB79FF2-DFC2-4B4F-B192-FD387F56E426}</ProjectGuid>
+    <ProjectGuid>{B32FBFD3-B73A-4BF0-BF33-FE3D66B1B4E6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>InvestmentLib</RootNamespace>
-    <AssemblyName>InvestmentLib</AssemblyName>
+    <RootNamespace>ClientClassesLib</RootNamespace>
+    <AssemblyName>ClientClassesLib</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -43,14 +43,16 @@
   <ItemGroup>
     <Compile Include="Investment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Connected Services\" />
+    <Compile Include="TransactionInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EnumsLib\EnumsLib.csproj">
       <Project>{ea085702-4d9f-408d-84f4-9528c67b9560}</Project>
       <Name>EnumsLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MyExceptionsLib\MyExceptionsLib.csproj">
+      <Project>{a0e085b5-d2eb-4b31-90cc-61d7139f6caf}</Project>
+      <Name>MyExceptionsLib</Name>
     </ProjectReference>
     <ProjectReference Include="..\PropertiesChangedLib\PropertiesChangedLib.csproj">
       <Project>{d5250aa0-57c0-45d1-9760-5ade89505968}</Project>

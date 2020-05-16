@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Общие сведения об этой сборке предоставляются следующим набором
 // набора атрибутов. Измените значения этих атрибутов для изменения сведений,
 // связанные со сборкой.
-[assembly: AssemblyTitle("InvestmentLib")]
+[assembly: AssemblyTitle("TransactionLib")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("InvestmentLib")]
+[assembly: AssemblyProduct("TransactionLib")]
 [assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("ccb79ff2-dfc2-4b4f-b192-fd387f56e426")]
+[assembly: Guid("ecdbb038-2179-411a-bc02-1705374dca7c")]
 
 // Сведения о версии сборки состоят из указанных ниже четырех значений:
 //

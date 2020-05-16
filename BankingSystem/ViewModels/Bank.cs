@@ -9,11 +9,13 @@ using ComandLib;
 using InvestmentLib;
 using Newtonsoft.Json;
 using PropertiesChangedLib;
+using MyExceptionsLib;
+using TransactionLib;
 using static EnumsLib.Enums;
 
 namespace BankingSystem
 {
-    class Bank : PropertiesChanged // Модель представления банка для основногo окна
+    public class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
         #region События
         public event Action<TransactionInfo> OnPayment;
@@ -81,10 +83,12 @@ namespace BankingSystem
         public Bank()
         {
             #region Инициализация отделов
-            DepItems = new ObservableCollection<BaseDepartment>(); // добавление отделов в коллекцию
-            DepItems.Add(new Department<Juridical>("Юридические лица"));
-            DepItems.Add(new Department<Individual>("Физические лица"));
-            DepItems.Add(new Department<VIPClient>("VIP Клиенты"));
+            DepItems = new ObservableCollection<BaseDepartment>
+            {
+                new Department<Juridical>("Юридические лица"),
+                new Department<Individual>("Физические лица"),
+                new Department<VIPClient>("VIP Клиенты")
+            }; // добавление отделов в коллекцию
 
             #endregion
 
@@ -100,7 +104,7 @@ namespace BankingSystem
             else
             {
                 FillClients(10);
-                JsonSerialize(this);
+                this.JsonSerializer();
             }    
             #endregion
 
@@ -115,7 +119,8 @@ namespace BankingSystem
                 SelectedClient.BankBalance += SelectedClient.Investment.CurrentSum;
                 SelectedClient.Investment = null;
                 Info.Close();
-                JsonSerialize(this);
+                this.JsonSerializer();
+
                 MessageBox.Show("Вы вывели вклад на свой счет.", "", MessageBoxButton.OK, MessageBoxImage.Information);
             }); // вывод средств из вклада на счет
             InvestmentButton = new Command(() =>
@@ -134,7 +139,7 @@ namespace BankingSystem
                 SelectedClient.Investment = new Investment(type, clientType, result, CurrentDate);
                 SelectedClient.BankBalance = SelectedClient.BankBalance - result;
                 CreateInvest.Close();
-                JsonSerialize(this);
+                this.JsonSerializer();
                 MessageBox.Show("Вклад оформлен!");
             }); // окно открытия вклада
             TransferButton = new Command(() =>
@@ -200,7 +205,7 @@ namespace BankingSystem
                     newsum, c.ClientType) {Type = TransactionType.Receive };
                 OnPayment?.Invoke(payment);
                 OnReceive?.Invoke(receiver);
-                JsonSerialize(this);
+                this.JsonSerializer();
                 OnPayment -= SelectedClient.Transaction;
                 OnReceive -= client.Transaction;
                 MessageBox.Show("Перевод завершен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Asterisk);
@@ -217,10 +222,18 @@ namespace BankingSystem
             {
                 if (string.IsNullOrEmpty(Deposit.DepositField.Text)) { MessageBox.Show("Поле пустое"); return; }
                 if (!long.TryParse(Deposit.DepositField.Text, out long result)) { MessageBox.Show("В поле ввода строка или число слишком большое"); return; }
-                if (result > 10000) { MessageBox.Show("Нельзя пополнить счет на сумму более 10000$ за раз"); return; }
+                try
+                {
+                    if (result > 10000) throw new DepositException("Нельзя пополнить счет на сумму более 10000$ за раз");
+                }
+                catch (DepositException e)
+                {
+                    MessageBox.Show(e.Message);
+                    return;
+                }
                 SelectedClient.BankBalance += result;
                 Deposit.Close();
-                JsonSerialize(this);
+                this.JsonSerializer();
                 MessageBox.Show("Баланс пополнен!");
             }); // пополнение счета 
             AddClientButton = new Command(() =>
@@ -243,20 +256,20 @@ namespace BankingSystem
                 if (SelectedClientType.Tag.Equals("VIP"))
                 {
                     newClient = new VIPClient(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
-                    (DepItems[2] as Department<VIPClient>).Clients.Add(newClient as VIPClient);
+                    newClient.AddTo(DepItems[2] as Department<VIPClient>);
                 }
                 else if (SelectedClientType.Tag.Equals("Indiv"))
                 {
                     newClient = new Individual(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Name.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
-                    (DepItems[1] as Department<Individual>).Clients.Add(newClient as Individual);
+                    newClient.AddTo(DepItems[1] as Department<Individual>);
                 }
                 else
                 {
                     newClient = new Juridical(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text));
-                    (DepItems[0] as Department<Juridical>).Clients.Add(newClient as Juridical);
+                    newClient.AddTo(DepItems[0] as Department<Juridical>);
                 }
                 AddClient.Close();
-                JsonSerialize(this);
+                this.JsonSerializer();
                 MessageBox.Show("Клиент добавлен!");
 
             }); // добавление клиента
@@ -287,16 +300,20 @@ namespace BankingSystem
                         switch (cltype)
                         {
                             case ClientType.VIP:
-                                (DepItems[2] as Department<VIPClient>).Clients.Add(new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.VIP, c.Age)
-                                { BankBalance = c.BankBalance, Investment = c.Investment });
+
+                                var vip = new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.VIP, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment };
+                                vip.AddTo(DepItems[2] as Department<VIPClient>);
                                 break;
                             case ClientType.Individual:
-                                (DepItems[1] as Department<Individual>).Clients.Add(new Individual(c.FirstName, c.LastName, c.Patronymic, ClientType.Individual, c.Age)
-                                { BankBalance = c.BankBalance, Investment = c.Investment });
+                                var ind = new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.Individual, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment };
+                                ind.AddTo(DepItems[1] as Department<Individual>);
                                 break;
                             case ClientType.Juridical:
-                                (DepItems[0] as Department<Juridical>).Clients.Add(new Juridical(c.FirstName, c.LastName, c.Patronymic, ClientType.Juridical, c.Age)
-                                { BankBalance = c.BankBalance, Investment = c.Investment });
+                                var jur = new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.Juridical, c.Age)
+                                { BankBalance = c.BankBalance, Investment = c.Investment };
+                                jur.AddTo(DepItems[0] as Department<Juridical>);
                                 break;
                             default:
                                 break;
@@ -304,22 +321,22 @@ namespace BankingSystem
                         switch (c.ClientType)
                         {
                             case ClientType.VIP:
-                                (DepItems[2] as Department<VIPClient>).Clients.Remove(SelectedClient as VIPClient);
+                                SelectedClient.RemoveFrom(DepItems[2] as Department<VIPClient>);
                                 SelectedClient = null;
                                 break;
                             case ClientType.Individual:
-                                (DepItems[1] as Department<Individual>).Clients.Remove(SelectedClient as Individual);
+                                SelectedClient.RemoveFrom(DepItems[1] as Department<Individual>);
                                 SelectedClient = null;
                                 break;
                             case ClientType.Juridical:
-                                (DepItems[0] as Department<Juridical>).Clients.Remove(SelectedClient as Juridical);
+                                SelectedClient.RemoveFrom(DepItems[0] as Department<Juridical>);
                                 SelectedClient = null;
                                 break;
                             default:
                                 break;
                         }
                         EditClient.Close();
-                        JsonSerialize(this);
+                        this.JsonSerializer();
                         MessageBox.Show("Клиент изменен");
                         return;
                     }
@@ -348,7 +365,7 @@ namespace BankingSystem
                     default:
                         break;
                 }
-                JsonSerialize(this);
+                this.JsonSerializer();
                 MessageBox.Show("Клиент удален");
             });
             NameClick = new Command(() =>
@@ -752,18 +769,6 @@ namespace BankingSystem
             string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string json = File.ReadAllText($@"{path}\BankLogs\VIP.json");
             return JsonConvert.DeserializeObject<Department<VIPClient>>(json);
-        }
-        private void JsonSerialize(Bank bank)
-        {
-            if (!Directory.Exists($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs"))
-                Directory.CreateDirectory($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs");
-
-            var json = JsonConvert.SerializeObject(bank.DepItems[0] as Department<Juridical>);
-            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Juridical.json", json);
-            var json1 = JsonConvert.SerializeObject(bank.DepItems[1] as Department<Individual>);
-            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Individual.json", json1);
-            var json2 = JsonConvert.SerializeObject(bank.DepItems[2] as Department<VIPClient>);
-            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\VIP.json", json2);
         }
         #endregion
 

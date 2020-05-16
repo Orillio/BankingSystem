@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PropertiesChangedLib;
+﻿using PropertiesChangedLib;
 using static EnumsLib.Enums;
 
-namespace BankingSystem
+namespace TransactionLib
 {
     public enum TransactionType { Payment, Receive }
     public class TransactionInfo : PropertiesChanged

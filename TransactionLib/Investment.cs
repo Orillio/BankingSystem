@@ -1,8 +1,10 @@
 ﻿using PropertiesChangedLib;
 using System;
+using System.IO;
 using System.IO.Compression;
 using EnumsLib;
 using static EnumsLib.Enums;
+using MyExceptionsLib;
 
 namespace InvestmentLib
 {
@@ -11,13 +13,13 @@ namespace InvestmentLib
         #region Private fields
         private TimeSpan ts; // разница во времени между  датой вклада и сегодняшней
         private DateTime currentdate; //  дата выбранная в календаре
-        private int percent;
 
         #endregion
 
         #region Properties
 
-        public int Percentage { get => percent; } // ставка по вкладу
+        public int Percentage { get; }
+
         public Enums.ClientType ClientType { get; set; } 
         public Enums.InvestmentType Type { get; set; }
         public long InvestmentSum { get; set; } // сумма инвестиции
@@ -32,7 +34,7 @@ namespace InvestmentLib
 
                 currentdate = value; // передаем значение из календаря в currentdate
                 ts = currentdate - InvestmentDate; // считаем количество дней прошедших после депозита
-                if (ts.Days < 0) throw new Exception($"Вклада еще несуществовало. Дата вклада: {InvestmentDate.ToShortDateString()}"); // если дней меньше нуля, то вклада еще не существовало
+                if (ts.Days < 0) throw new InvalidDateException($"Вклада еще несуществовало. Дата вклада: {InvestmentDate.ToShortDateString()}"); // если дней меньше нуля, то вклада еще не существовало
                 switch (Type)
                 {
                     case Enums.InvestmentType.Capitalization: // в случае, если тип инвестиции - с капитализацией
@@ -52,7 +54,7 @@ namespace InvestmentLib
 
         public Investment(InvestmentType type, ClientType clType, long sum, DateTime date)
         {
-            percent = clType == ClientType.VIP ? 15 : clType == ClientType.Juridical ? 9 : 11; 
+            Percentage = clType == ClientType.VIP ? 15 : clType == ClientType.Juridical ? 9 : 11; 
             // определение ставки по типу клиента VIP - 15%; Физическое лицо - 11%; Юридическое - 9%
             this.InvestmentSum = sum;
             this.Type = type;

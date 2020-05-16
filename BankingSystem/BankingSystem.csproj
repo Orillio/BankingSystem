@@ -67,7 +67,6 @@
     <Compile Include="AddClientWindow.xaml.cs">
       <DependentUpon>AddClientWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ClientClasses\TransactionInfo.cs" />
     <Compile Include="ClientInfoWindow.xaml.cs">
       <DependentUpon>ClientInfoWindow.xaml</DependentUpon>
     </Compile>
@@ -84,6 +83,7 @@
     <Compile Include="InvestCreateWindow.xaml.cs">
       <DependentUpon>InvestCreateWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ExtensionMethods\ExtensionMethods.cs" />
     <Compile Include="TransactionInfoWindow.xaml.cs">
       <DependentUpon>TransactionInfoWindow.xaml</DependentUpon>
     </Compile>
@@ -184,6 +184,10 @@
     <Resource Include="img\edit.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ClientClassesLib\ClientClassesLib.csproj">
+      <Project>{b32fbfd3-b73a-4bf0-bf33-fe3d66b1b4e6}</Project>
+      <Name>ClientClassesLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ComandLib\ComandLib.csproj">
       <Project>{c0f68302-732b-49fe-bb27-7832b6b3613f}</Project>
       <Name>ComandLib</Name>
@@ -192,14 +196,17 @@
       <Project>{ea085702-4d9f-408d-84f4-9528c67b9560}</Project>
       <Name>EnumsLib</Name>
     </ProjectReference>
-    <ProjectReference Include="..\InvestmentLib\InvestmentLib.csproj">
-      <Project>{ccb79ff2-dfc2-4b4f-b192-fd387f56e426}</Project>
-      <Name>InvestmentLib</Name>
+    <ProjectReference Include="..\MyExceptionsLib\MyExceptionsLib.csproj">
+      <Project>{a0e085b5-d2eb-4b31-90cc-61d7139f6caf}</Project>
+      <Name>MyExceptionsLib</Name>
     </ProjectReference>
     <ProjectReference Include="..\PropertiesChangedLib\PropertiesChangedLib.csproj">
       <Project>{d5250aa0-57c0-45d1-9760-5ade89505968}</Project>
       <Name>PropertiesChangedLib</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.6.1.1\build\Fody.targets" Condition="Exists('..\packages\Fody.6.1.1\build\Fody.targets')" />
