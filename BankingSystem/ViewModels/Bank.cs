@@ -796,6 +796,7 @@ namespace BankingSystem
                 data[6] = Random.Next(18, 31);
                 data[7] = Random.Next(10, 200000);
                 Clients.Table.Rows.Add(data);
+                
             }
 
             for (int i = 0; i < count; i++)

@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Data;
+using System.Windows;
 using System.Windows.Media;
 
 namespace BankingSystem
@@ -17,6 +18,13 @@ namespace BankingSystem
         private void Deps_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
 
+            var res = from x in (DataContext as Bank).Clients.Table.AsEnumerable()
+                      where x.Field<string>("clienttype") == "Juridical"
+                      select x;
+
+            DataTable temp = res.CopyToDataTable();
+
+            Clients.ItemsSource = temp.DefaultView;
         }
     }
 }

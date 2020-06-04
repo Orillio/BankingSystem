@@ -42,14 +42,13 @@ namespace BankingSystem
 
             Adapter.InsertCommand = new SqlCommand(insert, Connection);
 
-            Adapter.InsertCommand.Parameters.Add("@clientName", SqlDbType.NVarChar, 4, "clientName");
-            Adapter.InsertCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 4, "clientLastname");
-            Adapter.InsertCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 4, "clientPatronymic");
-            Adapter.InsertCommand.Parameters.Add("@clienttype", SqlDbType.Int, 4, "clienttype");
+            Adapter.InsertCommand.Parameters.Add("@clientName", SqlDbType.NVarChar, 20, "clientName");
+            Adapter.InsertCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 20, "clientLastname");
+            Adapter.InsertCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 20, "clientPatronymic");
+            Adapter.InsertCommand.Parameters.Add("@clienttype", SqlDbType.NVarChar, 20, "clienttype");
             Adapter.InsertCommand.Parameters.Add("@clientAge", SqlDbType.Int, 4, "clientAge");
             Adapter.InsertCommand.Parameters.Add("@cardNumber", SqlDbType.Int, 4, "cardNumber");
             Adapter.InsertCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
-            Adapter.InsertCommand.Parameters.Add("@investmentID", SqlDbType.Int, 4, "investmentID");
 
             #endregion
 
@@ -57,14 +56,13 @@ namespace BankingSystem
 
             Adapter.UpdateCommand = new SqlCommand(update, Connection);
 
-            Adapter.UpdateCommand.Parameters.Add("@clientName", SqlDbType.NVarChar, 4, "clientName");
-            Adapter.UpdateCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 4, "clientLastname");
-            Adapter.UpdateCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 4, "clientPatronymic");
-            Adapter.UpdateCommand.Parameters.Add("@clienttype", SqlDbType.Int, 4, "clienttype");
+            Adapter.UpdateCommand.Parameters.Add("@clientName", SqlDbType.NVarChar, 20, "clientName");
+            Adapter.UpdateCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 20, "clientLastname");
+            Adapter.UpdateCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 20, "clientPatronymic");
+            Adapter.UpdateCommand.Parameters.Add("@clienttype", SqlDbType.NVarChar, 20, "clienttype");
             Adapter.UpdateCommand.Parameters.Add("@clientAge", SqlDbType.Int, 4, "clientAge");
             Adapter.UpdateCommand.Parameters.Add("@cardNumber", SqlDbType.Int, 4, "cardNumber");
             Adapter.UpdateCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
-            Adapter.UpdateCommand.Parameters.Add("@investmentID", SqlDbType.Int, 4, "investmentID");
             #endregion
 
             #region DELETE Command
