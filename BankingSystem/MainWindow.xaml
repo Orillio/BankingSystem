@@ -25,7 +25,7 @@
         <Border BorderBrush="Gray" BorderThickness="1">
             <Grid>
                 <ListBox x:Name="Deps" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ItemsSource="{Binding DepItems}" SelectedItem="{Binding SelectedDepartment, Mode=OneWayToSource}" BorderThickness="0" Height="150" VerticalAlignment="Top">
+                         ItemsSource="{Binding DepItems}" SelectionChanged="Deps_SelectionChanged" SelectedItem="{Binding SelectedDepartment, Mode=OneWayToSource}" BorderThickness="0" Height="150" VerticalAlignment="Top">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}" FontSize="15"/>
@@ -190,7 +190,8 @@
             <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Name}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
 
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
-                      ItemsSource="{Binding ElementName=Deps, Path=SelectedItem.Clients}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
+                      ItemsSource="{Binding ElementName=Deps, Path=SelectedItem.Clients}"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>

@@ -32,37 +32,37 @@ namespace BankingSystem
 
         public static void AddTo<T>(this AbstractClient client, Department<T> department)
             where T : AbstractClient => department.Clients.Add(client as T);
-        
-        public static void JsonSerializer(this Bank bank)
-        {
-            if (!Directory.Exists($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs"))
-                Directory.CreateDirectory($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs");
 
-            bank.Load = new LoadingScreen();
-            bank.Load.Show();
+        //public static void JsonSerializer(this Bank bank)
+        //{
+        //    if (!Directory.Exists($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs"))
+        //        Directory.CreateDirectory($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs");
 
-            var thread = new Thread(() =>
-            {
-                var task1 = Task.Run(() =>
-                {
-                    var json = JsonConvert.SerializeObject(bank.DepItems[0] as Department<Juridical>);
-                    File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Juridical.json", json);
-                });
-                var task2 = Task.Run(() =>
-                {
-                    var json1 = JsonConvert.SerializeObject(bank.DepItems[1] as Department<Individual>);
-                    File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Individual.json", json1);
-                });
-                var task3 = Task.Run(() =>
-                {
-                    var json2 = JsonConvert.SerializeObject(bank.DepItems[2] as Department<VIPClient>);
-                    File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\VIP.json", json2);
-                });
-                Task.WaitAll(task1, task2, task3);
-                task1.Dispose(); task2.Dispose(); task3.Dispose();
-                Application.Current.Dispatcher.Invoke(() => { bank.Load.Close(); });
-            });
-            thread.Start();
-        }
+        //    bank.Load = new LoadingScreen();
+        //    bank.Load.Show();
+
+        //    var thread = new Thread(() =>
+        //    {
+        //        var task1 = Task.Run(() =>
+        //        {
+        //            var json = JsonConvert.SerializeObject(bank.DepItems[0] as Department<Juridical>);
+        //            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Juridical.json", json);
+        //        });
+        //        var task2 = Task.Run(() =>
+        //        {
+        //            var json1 = JsonConvert.SerializeObject(bank.DepItems[1] as Department<Individual>);
+        //            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\Individual.json", json1);
+        //        });
+        //        var task3 = Task.Run(() =>
+        //        {
+        //            var json2 = JsonConvert.SerializeObject(bank.DepItems[2] as Department<VIPClient>);
+        //            File.WriteAllText($@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\BankLogs\VIP.json", json2);
+        //        });
+        //        Task.WaitAll(task1, task2, task3);
+        //        task1.Dispose(); task2.Dispose(); task3.Dispose();
+        //        Application.Current.Dispatcher.Invoke(() => { bank.Load.Close(); });
+        //    });
+        //    thread.Start();
+        //}
     }
 }

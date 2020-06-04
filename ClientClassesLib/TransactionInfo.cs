@@ -3,7 +3,7 @@ using static EnumsLib.Enums;
 
 namespace TransactionLib
 {
-    public enum TransactionType { Payment, Receive }
+    public enum TransactionType { Payment = 1, Receive = 2}
     public class TransactionInfo : PropertiesChanged
     { 
         public string NameTarget { get; set; }

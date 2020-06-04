@@ -13,5 +13,10 @@ namespace BankingSystem
             InitializeComponent();
             DataContext = new Bank();
         }
+
+        private void Deps_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+
+        }
     }
 }

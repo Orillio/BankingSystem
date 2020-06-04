@@ -11,6 +11,7 @@ namespace MultiThreadTest
 {
     class Program
     {
+
         static List<Task> tasks = new List<Task>();
 
         private static object o = new object();
@@ -23,6 +24,7 @@ namespace MultiThreadTest
 
         static void Main(string[] args)
         {
+            var se = int.Parse("s");
             Console.OutputEncoding = Encoding.UTF8;
             var th = Thread.CurrentThread; th.Name = "Main";
 
