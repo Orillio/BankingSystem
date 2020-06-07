@@ -1,6 +1,8 @@
 ﻿using System.Data;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
+
 
 namespace BankingSystem
 {
@@ -17,14 +19,9 @@ namespace BankingSystem
 
         private void Deps_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-
-            var res = from x in (DataContext as Bank).Clients.Table.AsEnumerable()
-                      where x.Field<string>("clienttype") == "Juridical"
-                      select x;
-
-            DataTable temp = res.CopyToDataTable();
-
-            Clients.ItemsSource = temp.DefaultView;
+            Clients.ItemsSource = Deps.SelectedIndex == 0
+                ? (DataContext as Bank).Clients.Table.DefaultView : Deps.SelectedIndex == 1
+                ? (DataContext as Bank).IndivClients.Table.DefaultView : (DataContext as Bank).VIPClients.Table.DefaultView;
         }
     }
 }

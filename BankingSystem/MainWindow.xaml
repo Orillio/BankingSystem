@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BankingSystem"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         mc:Ignorable="d"
         Title="Bank" Height="600" Width="900"
         MinHeight="600" MinWidth="900"
@@ -25,7 +26,8 @@
         <Border BorderBrush="Gray" BorderThickness="1">
             <Grid>
                 <ListBox x:Name="Deps" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         SelectionChanged="Deps_SelectionChanged" BorderThickness="0" Height="150" VerticalAlignment="Top">
+                         BorderThickness="0" Height="150" VerticalAlignment="Top" SelectedIndex="{Binding SelectedDep}"
+                         SelectionChanged="Deps_SelectionChanged">
                     <ListBoxItem Height="30" Content="Физические лица" FontSize="16" FontWeight="DemiBold"/>
                     <ListBoxItem Height="30" Content="Юридические лица" FontSize="16" FontWeight="DemiBold"/>
                     <ListBoxItem Height="30" Content="VIP клиенты" FontSize="16" FontWeight="DemiBold"/>
@@ -188,7 +190,7 @@
             <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Name}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
 
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
-                      ItemsSource="{Binding Clients.Table.DefaultView}"
+                      ItemsSource="{Binding JuridicalClients.Table.DefaultView, Mode=OneWay}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
                 <ListView.View>
                     <GridView>

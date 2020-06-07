@@ -15,11 +15,10 @@ namespace InvestmentLib
         #endregion
 
         #region Properties
-
         public int Percentage { get; }
 
-        public Enums.ClientType ClientType { get; set; } 
-        public Enums.InvestmentType Type { get; set; }
+        public ClientType ClientType { get; set; } 
+        public InvestmentType Type { get; set; }
         public long InvestmentSum { get; set; } // сумма инвестиции
         public DateTime InvestmentDate { get; set; } // дата инвестиции
         public long CurrentSum { get; set; } // сумма накопившаяся за период вклада
@@ -35,11 +34,11 @@ namespace InvestmentLib
                 if (ts.Days < 0) throw new InvalidDateException($"Вклада еще несуществовало. Дата вклада: {InvestmentDate.ToShortDateString()}"); // если дней меньше нуля, то вклада еще не существовало
                 switch (Type)
                 {
-                    case Enums.InvestmentType.Capitalization: // в случае, если тип инвестиции - с капитализацией
+                    case InvestmentType.Capitalization: // в случае, если тип инвестиции - с капитализацией
                         var months = ts.Days / 30; // считаем количество месяцев прошедших после депозита
                         CurrentSum = (long)(InvestmentSum + (InvestmentSum / 100.0 * Percentage / 12.0 * months));
                         break;
-                    case Enums.InvestmentType.NotCapitalization:// в случае, если тип инвестиции - без капитализации
+                    case InvestmentType.NotCapitalization:// в случае, если тип инвестиции - без капитализации
                         var years = ts.Days / 365; // считаем количество лет прошедших после депозита
                         CurrentSum = (long)(InvestmentSum + (InvestmentSum / 100.0 * Percentage * years));
                         break;

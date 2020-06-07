@@ -26,7 +26,6 @@ namespace BankingSystem
 
     public class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
-
         #region Объект блокировки
 
         object o = new object();
@@ -35,6 +34,7 @@ namespace BankingSystem
         #region Базы данных
 
         public ClientsDataBase Clients { get; set; }
+
         #endregion
 
         #region События
@@ -62,9 +62,9 @@ namespace BankingSystem
 
         #region Переданные данные через View
         public AbstractClient SelectedClient { get; set; } // Информация о выбранном клиенте, которая передается через View
-        public BaseDepartment SelectedDepartment { get; set; } // Информация о выбранном отделе, которая передается через View
         public DateTime CurrentDate { get; set; } = DateTime.Now;
         public ComboBoxItem SelectedInvType { get; set; }
+        public ListView ListOfClients { get; set; }
         public ComboBoxItem SelectedClientType { get; set; }
         public ComboBoxItem EditSelectedClientType { get; set; }
 
@@ -89,6 +89,7 @@ namespace BankingSystem
         public ICommand PatrClick { get; set; }
         public ICommand BalanceClick { get; set; }
         public ICommand TransferInfo { get; set; }
+        public ICommand ChangeDep { get; set; }
 
         #endregion
 
@@ -104,29 +105,34 @@ namespace BankingSystem
         {
             #region DB init
 
-            var selectJur = @"SELECT * FROM Clients Order By Clients.id ";
-            var delete = @"DELETE FROM Clients WHERE id = @id";
+            #region JuridCommands
+            var selectJur = @"SELECT * FROM JuridicalClients Order By JuridicalClients.id ";
+            var deleteJur = @"DELETE FROM JuridicalClients WHERE id = @id";
 
-            var insert = @"INSERT INTO Clients (clientName, clientLastname, clientPatronymic, clienttype,
+            var insertJur = @"INSERT INTO JuridicalClients (clientName, clientLastname, clientPatronymic,
                                                 clientAge, cardNumber, bankBalance)
-                                        VALUES (@clientName, @clientLastname, @clientPatronymic, @clienttype,
+                                        VALUES (@clientName, @clientLastname, @clientPatronymic,
                                                 @clientAge, @cardNumber, @bankBalance)";
 
-            var update = @"UPDATE Clients SET clientName = @clientName, clientLastname = @clientLastname,
+            var updateJur = @"UPDATE JuridicalClients SET clientName = @clientName, clientLastname = @clientLastname,
                                               clientPatronymic = @clientPatronymic,
-                                              clienttype = @clienttype,
                                               clientAge = @clientAge,
                                               cardNumber = @cardNumber,
                                               bankBalance = @bankBalance,
                           WHERE id = @id";
-            Clients = new ClientsDataBase(selectJur, insert, update, delete);
 
             #endregion
 
 
+            Clients = new ClientsDataBase(selectJur, insertJur, updateJur, deleteJur);
+            #endregion
+
             FillClients(10);
 
             #region Команды
+
+
+
 
             //InfoClick = new Command(ClickInfo); // открытие информационной панели о вкладе
             //WithdrawButton = new Command(() =>
@@ -622,10 +628,10 @@ namespace BankingSystem
 
         #region Рандомное заполнение
 
-        private string ClientRep(int type)
+        private string ClientRep(int type, Random random)
         {
             if (type == 0)
-                switch (Random.Next(0, 31))
+                switch (random.Next(0, 31))
                 {
                     case 0: return "Филипп";
                     case 1: return "Харитон";
@@ -661,7 +667,7 @@ namespace BankingSystem
                         return "Игнатий";
                 }
             else if (type == 1)
-                switch (Random.Next(0, 31))
+                switch (random.Next(0, 31))
                 {
                     case 0: return "Чернов";
                     case 1: return "Носков";
@@ -697,7 +703,7 @@ namespace BankingSystem
                         return "Гамула";
                 }
             else if (type == 2)
-                switch (Random.Next(0, 31))
+                switch (random.Next(0, 31))
                 {
                     case 0: return "Алексеевич";
                     case 1: return "Андреевич";
@@ -735,36 +741,10 @@ namespace BankingSystem
                 }
             return null;
         } // репозиторий ФИО
-        private Investment RandomInvest(ClientType type)
-        {
-            switch (type)
-            {
-                case ClientType.VIP:
-                    if (Random.Next(0, 2) == 0)
-                        if (Random.Next(0, 2) == 0) return new Investment(InvestmentType.Capitalization, ClientType.VIP, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
-                        else return new Investment(InvestmentType.NotCapitalization, ClientType.VIP, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2010,DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
-                    else return null;
-                case ClientType.Individual:
-                    if (Random.Next(0, 2) == 0)
-                        if (Random.Next(0, 2) == 0) return new Investment(InvestmentType.Capitalization, ClientType.Individual, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
-                        else return new Investment(InvestmentType.NotCapitalization, ClientType.Individual, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
-                    else return null;
-                case ClientType.Juridical:
-                    if (Random.Next(0, 2) == 0)
-                        if (Random.Next(0, 2) == 0) return new Investment(InvestmentType.Capitalization, ClientType.Juridical, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
-                        else return new Investment(InvestmentType.NotCapitalization, ClientType.Juridical, Random.Next(500, 10000),
-                            new DateTime(Random.Next(2010, DateTime.Today.Year - 1), Random.Next(1, 13), Random.Next(1, 28)));
-                    else return null;
-                default:
-                    break;
-            }
-            return null;
-        } // рандомная информация о вкладе
+        //private Investment RandomInvest(ClientType type)
+        //{
+
+        //}
         public static string CardRandom(Random random)
         {
             string longrandom = random.Next(1_000_000_000, int.MaxValue).ToString() + random.Next(1_000_000_000, int.MaxValue).ToString();
@@ -783,45 +763,42 @@ namespace BankingSystem
         }
         public void FillClients(int count)
         {
-            if (Clients.Table.Rows.Count != 0) return;
+            if (Clients.Table.Rows.Count != 0 && Clients.Table.Rows.Count != 0
+                && Clients.Table.Rows.Count != 0) return;
 
             for (int i = 0; i < count; i++)
             {
                 DataRow data = Clients.Table.NewRow();
-                data[1] = ClientRep(0);
-                data[2] = ClientRep(1);
-                data[3] = ClientRep(2);
-                data[4] = "Juridical";
+                data[1] = ClientRep(0, JurRandom);
+                data[2] = ClientRep(1, JurRandom);
+                data[3] = ClientRep(2, JurRandom);
+                data[4] = Random.Next(18, 31);
                 data[5] = Random.Next(18, 31);
-                data[6] = Random.Next(18, 31);
-                data[7] = Random.Next(10, 200000);
-                Clients.Table.Rows.Add(data);
-                
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                DataRow data = Clients.Table.NewRow();
-                data[1] = ClientRep(0);
-                data[2] = ClientRep(1);
-                data[3] = ClientRep(2);
-                data[4] = "Individual";
-                data[5] = Random.Next(18, 31);
-                data[6] = Random.Next(18, 31);
-                data[7] = Random.Next(10, 200000);
+                data[6] = Random.Next(10, 200000);
                 Clients.Table.Rows.Add(data);
             }
 
             for (int i = 0; i < count; i++)
             {
                 DataRow data = Clients.Table.NewRow();
-                data[1] = ClientRep(0);
-                data[2] = ClientRep(1);
-                data[3] = ClientRep(2);
-                data[4] = "VIP";
+                data[1] = ClientRep(0, IndRandom);
+                data[2] = ClientRep(1, IndRandom);
+                data[3] = ClientRep(2, IndRandom);
+                data[4] = Random.Next(18, 31);
                 data[5] = Random.Next(18, 31);
-                data[6] = Random.Next(18, 31);
-                data[7] = Random.Next(10, 200000);
+                data[6] = Random.Next(10, 200000);
+                Clients.Table.Rows.Add(data);
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                DataRow data = Clients.Table.NewRow();
+                data[1] = ClientRep(0, VipRandom);
+                data[2] = ClientRep(1, VipRandom);
+                data[3] = ClientRep(2, VipRandom);
+                data[4] = Random.Next(18, 31);
+                data[5] = Random.Next(18, 31);
+                data[6] = Random.Next(10, 200000);
                 Clients.Table.Rows.Add(data);
             }
             Clients.Adapter.Update(Clients.Table);
