@@ -98,9 +98,9 @@
                     <!--Информация о клиенте-->
                     <StackPanel Height="25" VerticalAlignment="Top" Orientation="Horizontal" Margin="5">
                         <TextBlock Margin="0,0,5,0" FontSize="15" Text="Клиент: "/>
-                        <TextBlock FontSize="15" Margin="0,0,5,0" Text="{Binding ElementName=Clients, Path=SelectedItem.FirstName}"/>
-                        <TextBlock FontSize="15" Margin="0,0,5,0" Text="{Binding ElementName=Clients, Path=SelectedItem.LastName}"/>
-                        <TextBlock FontSize="15" Text="{Binding ElementName=Clients, Path=SelectedItem.Patronymic}"/>
+                        <TextBlock FontSize="15" Margin="0,0,5,0" Text="{Binding ElementName=Clients, Path=SelectedItem.clientName}"/>
+                        <TextBlock FontSize="15" Margin="0,0,5,0" Text="{Binding ElementName=Clients, Path=SelectedItem.clientLastname}"/>
+                        <TextBlock FontSize="15" Text="{Binding ElementName=Clients, Path=SelectedItem.clientPatronymic}"/>
                     </StackPanel>
 
                     <!--Номер карты клиента-->
@@ -207,16 +207,16 @@
                             </GridViewColumn.CellTemplate>
                             <GridViewColumnHeader Command="{Binding NameClick}" Width="140">Имя</GridViewColumnHeader>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding LastName}">
+                        <GridViewColumn DisplayMemberBinding="{Binding clientLastname}">
                             <GridViewColumnHeader Command="{Binding LastClick}" Width="140">Фамилия</GridViewColumnHeader>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding Patronymic}">
+                        <GridViewColumn DisplayMemberBinding="{Binding clientPatronymic}">
                             <GridViewColumnHeader Command="{Binding PatrClick}" Width="140">Отчество</GridViewColumnHeader>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding CardNumber, Converter={x:Static local:CardConverter.Instance}}">
+                        <GridViewColumn DisplayMemberBinding="{Binding cardNumber, Converter={x:Static local:CardConverter.Instance}}">
                             <GridViewColumnHeader Width="150">Номер карты</GridViewColumnHeader>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding BankBalance}">
+                        <GridViewColumn DisplayMemberBinding="{Binding bankBalance}">
                             <GridViewColumnHeader Command="{Binding BalanceClick}" Width="140">Баланс</GridViewColumnHeader>
                         </GridViewColumn>
                     </GridView>

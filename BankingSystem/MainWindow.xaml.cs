@@ -20,7 +20,7 @@ namespace BankingSystem
         private void Deps_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             Clients.ItemsSource = Deps.SelectedIndex == 0
-                ? (DataContext as Bank).Clients.Table.DefaultView : Deps.SelectedIndex == 1
+                ? (DataContext as Bank).JuridClients.Table.DefaultView : Deps.SelectedIndex == 1
                 ? (DataContext as Bank).IndivClients.Table.DefaultView : (DataContext as Bank).VIPClients.Table.DefaultView;
         }
     }

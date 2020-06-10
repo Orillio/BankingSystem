@@ -42,11 +42,12 @@ namespace BankingSystem
 
             Adapter.InsertCommand = new SqlCommand(insert, Connection);
 
-            Adapter.InsertCommand.Parameters.Add("@clientName", SqlDbType., 20, "clientName");
+            Adapter.InsertCommand.Parameters.Add("@id", SqlDbType.Int, 4, "id").Direction = ParameterDirection.Output;
+            Adapter.InsertCommand.Parameters.Add("@clientName", SqlDbType.NVarChar, 20, "clientName");
             Adapter.InsertCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 20, "clientLastname");
             Adapter.InsertCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 20, "clientPatronymic");
             Adapter.InsertCommand.Parameters.Add("@clientAge", SqlDbType.Int, 4, "clientAge");
-            Adapter.InsertCommand.Parameters.Add("@cardNumber", SqlDbType.Int, 4, "cardNumber");
+            Adapter.InsertCommand.Parameters.Add("@cardNumber", SqlDbType.BigInt, 4, "cardNumber");
             Adapter.InsertCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
 
             #endregion
@@ -55,11 +56,12 @@ namespace BankingSystem
 
             Adapter.UpdateCommand = new SqlCommand(update, Connection);
 
+            Adapter.UpdateCommand.Parameters.Add("@id", SqlDbType.Int, 4, "id").SourceVersion = DataRowVersion.Original;
             Adapter.UpdateCommand.Parameters.Add("@clientName", SqlDbType.NVarChar, 20, "clientName");
             Adapter.UpdateCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 20, "clientLastname");
             Adapter.UpdateCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 20, "clientPatronymic");
             Adapter.UpdateCommand.Parameters.Add("@clientAge", SqlDbType.Int, 4, "clientAge");
-            Adapter.UpdateCommand.Parameters.Add("@cardNumber", SqlDbType.Int, 4, "cardNumber");
+            Adapter.UpdateCommand.Parameters.Add("@cardNumber", SqlDbType.BigInt, 4, "cardNumber");
             Adapter.UpdateCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
             #endregion
 
