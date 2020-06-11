@@ -33,9 +33,7 @@ namespace BankingSystem
         #endregion
 
         #region Базы данных
-        public ClientsDataBase JuridClients { get; set; }
-        public ClientsDataBase IndivClients { get; set; }
-        public ClientsDataBase VIPClients { get; set; }
+        public ClientsDataBase Clients { get; set; }
         public InvestmentsDataBase Investments { get; set; }
 
         #endregion
@@ -109,53 +107,20 @@ namespace BankingSystem
         {
             #region DB init
 
-            #region JuridCommands
-            var selectJur = @"SELECT * FROM JuridClients Order By JuridClients.id ";
-            var deleteJur = @"DELETE FROM JuridClients WHERE id = @id";
-            var insertJur = @"INSERT INTO JuridClients (clientName, clientLastname, clientPatronymic,
-                                                clientAge, cardNumber, bankBalance)
+            #region ClientCommands
+            var selectVip = @"SELECT * FROM Clients Order By Clients.id ";
+            var deleteVip = @"DELETE FROM Clients WHERE id = @id";
+            var insertVip = @"INSERT INTO Clients (clientName, clientLastname, clientPatronymic,
+                                                clientAge, cardNumber, bankBalance, clientType)
                                         VALUES (@clientName, @clientLastname, @clientPatronymic,
-                                                @clientAge, @cardNumber, @bankBalance)
+                                                @clientAge, @cardNumber, @bankBalance, @clientType)
                                         SET @id = @@IDENTITY";
-            var updateJur = @"UPDATE JuridClients SET clientName = @clientName, clientLastname = @clientLastname,
+            var updateVip = @"UPDATE Clients SET clientName = @clientName, clientLastname = @clientLastname,
                                               clientPatronymic = @clientPatronymic,
                                               clientAge = @clientAge,
                                               cardNumber = @cardNumber,
                                               bankBalance = @bankBalance,
-                          WHERE id = @id";
-
-            #endregion
-
-            #region IndivCommands
-            var selectInd = @"SELECT * FROM IndivClients Order By IndivClients.id ";
-            var deleteInd = @"DELETE FROM IndivClients WHERE id = @id";
-            var insertInd = @"INSERT INTO IndivClients (clientName, clientLastname, clientPatronymic,
-                                                clientAge, cardNumber, bankBalance)
-                                        VALUES (@clientName, @clientLastname, @clientPatronymic,
-                                                @clientAge, @cardNumber, @bankBalance)
-                                        SET @id = @@IDENTITY";
-            var updateInd = @"UPDATE IndivClients SET clientName = @clientName, clientLastname = @clientLastname,
-                                              clientPatronymic = @clientPatronymic,
-                                              clientAge = @clientAge,
-                                              cardNumber = @cardNumber,
-                                              bankBalance = @bankBalance,
-                          WHERE id = @id";
-
-            #endregion
-
-            #region VIPCommands
-            var selectVip = @"SELECT * FROM VIPClients Order By VIPClients.id ";
-            var deleteVip = @"DELETE FROM VIPClients WHERE id = @id";
-            var insertVip = @"INSERT INTO VIPClients (clientName, clientLastname, clientPatronymic,
-                                                clientAge, cardNumber, bankBalance)
-                                        VALUES (@clientName, @clientLastname, @clientPatronymic,
-                                                @clientAge, @cardNumber, @bankBalance)
-                                        SET @id = @@IDENTITY";
-            var updateVip = @"UPDATE VIPClients SET clientName = @clientName, clientLastname = @clientLastname,
-                                              clientPatronymic = @clientPatronymic,
-                                              clientAge = @clientAge,
-                                              cardNumber = @cardNumber,
-                                              bankBalance = @bankBalance,
+                                              clientType = @clientType,
                           WHERE id = @id";
             #endregion
 
@@ -174,10 +139,9 @@ namespace BankingSystem
 
             #endregion
 
-            JuridClients = new ClientsDataBase(selectJur, insertJur, updateJur, deleteJur);
-            IndivClients = new ClientsDataBase(selectInd, insertInd, updateInd, deleteInd);
-            VIPClients = new ClientsDataBase(selectVip, insertVip, updateVip, deleteVip);
+            Clients = new ClientsDataBase(selectVip, insertVip, updateVip, deleteVip);
             Investments = new InvestmentsDataBase(selectInv, insertInv, updateInv, deleteInv);
+            #endregion
 
             FillClients(10);
 
@@ -676,7 +640,6 @@ namespace BankingSystem
             #endregion
 
 
-            #endregion
 
         }
         #endregion
@@ -830,55 +793,30 @@ namespace BankingSystem
         }
         public void FillClients(int count)
         {
-            if (JuridClients.Table.Rows.Count != 0 && IndivClients.Table.Rows.Count != 0
-                && VIPClients.Table.Rows.Count != 0) return;
+            if (Clients.Table.Rows.Count != 0) return;
 
-            FillClients(JuridClients, count);
-            FillClients(IndivClients, count);
-            FillClients(VIPClients, count);
+            FillClientsInDb(Clients, count);
 
-            JuridClients.Adapter.Update(JuridClients.Table);
-            IndivClients.Adapter.Update(IndivClients.Table);
-            VIPClients.Adapter.Update(VIPClients.Table);
+            Clients.Update();
 
             FillRandomInvestmentInClients();
-            Investments.Adapter.Update(Investments.Table);
         }
         #endregion
 
         private void FillRandomInvestmentInClients()
         {
-            foreach (DataRow row in JuridClients.Table.Rows)
-            {
-
-                if (Random.Next(1, 3) == 1)
-                {
-                    var inv = RandomInvest();
-                    Investments.Table.Rows.Add();
-
-                }
-
-            }
-            foreach (DataRow row in IndivClients.Table.Rows)
+            foreach (DataRow row in Clients.Table.Rows)
             {
                 if (Random.Next(1, 3) == 1)
                 {
                     var inv = RandomInvest();
-                    Investments.Table.Rows.Add();
-
+                    inv["clientId"] = row["id"];
+                    Investments.Table.Rows.Add(inv);
                 }
             }
-            foreach (DataRow row in VIPClients.Table.Rows)
-            {
-                if (Random.Next(1, 3) == 1)
-                {
-                    var inv = RandomInvest();
-                    Investments.Table.Rows.Add();
-
-                }
-            }
+            Investments.Update();
         }
-        private void FillClients(ClientsDataBase db, int count)
+        private void FillClientsInDb(ClientsDataBase db, int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -887,8 +825,10 @@ namespace BankingSystem
                 data[2] = ClientRep(1, Random);
                 data[3] = ClientRep(2, Random);
                 data[4] = Random.Next(18, 31);
-                data[5] = long.Parse(CardRandom(Random));
-                data[6] = Random.Next(10, 200000);
+                data[5] = Random.Next(1, 4) == 1 ? "Juridical" : Random.Next(1, 4) == 2
+                    ? "Individual" : "VIP";
+                data[6] = long.Parse(CardRandom(Random));
+                data[7] = Random.Next(10, 200000);
                 db.Table.Rows.Add(data);
             }
         }

@@ -26,7 +26,6 @@ namespace BankingSystem
                 InitialCatalog = "LocalDB"
             };
             Connection = new SqlConnection(con.ConnectionString);
-
             #endregion
 
             Table = new DataTable();
@@ -47,6 +46,7 @@ namespace BankingSystem
             Adapter.InsertCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 20, "clientLastname");
             Adapter.InsertCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 20, "clientPatronymic");
             Adapter.InsertCommand.Parameters.Add("@clientAge", SqlDbType.Int, 4, "clientAge");
+            Adapter.InsertCommand.Parameters.Add("@clientType", SqlDbType.NVarChar, 20, "clientType");
             Adapter.InsertCommand.Parameters.Add("@cardNumber", SqlDbType.BigInt, 4, "cardNumber");
             Adapter.InsertCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
 
@@ -61,6 +61,7 @@ namespace BankingSystem
             Adapter.UpdateCommand.Parameters.Add("@clientLastname", SqlDbType.NVarChar, 20, "clientLastname");
             Adapter.UpdateCommand.Parameters.Add("@clientPatronymic", SqlDbType.NVarChar, 20, "clientPatronymic");
             Adapter.UpdateCommand.Parameters.Add("@clientAge", SqlDbType.Int, 4, "clientAge");
+            Adapter.UpdateCommand.Parameters.Add("@clientType", SqlDbType.NVarChar, 20, "clientType");
             Adapter.UpdateCommand.Parameters.Add("@cardNumber", SqlDbType.BigInt, 4, "cardNumber");
             Adapter.UpdateCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
             #endregion
@@ -72,7 +73,7 @@ namespace BankingSystem
 
             #endregion
 
-            Adapter.Fill(Table);
+             Adapter.Fill(Table);
             
             #endregion
         }

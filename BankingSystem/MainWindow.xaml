@@ -107,7 +107,7 @@
                     <StackPanel Margin="5,0,0,5" Height="25" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Margin="0,0,5,0" Text="Номер карты: "/>
                         <TextBlock x:Name="CardNumberField" FontSize="15" Text="{Binding ElementName=Clients,
-                            Path=SelectedItem.CardNumber, Converter={x:Static local:CardConverter.Instance}}"/>
+                            Path=SelectedItem.cardNumber, Converter={x:Static local:CardConverter.Instance}}"/>
                     </StackPanel>
 
                     <!--Информация о вкладе-->
@@ -129,7 +129,7 @@
                         </Button>
 
                         <TextBlock x:Name="DepositField" FontSize="15" VerticalAlignment="Center"
-                                   Text="{Binding ElementName=Clients, Path=SelectedItem.Investment, Converter={x:Static local:InvestmentConverter.Instance}}"/>
+                                   Text="{Binding ElementName=Clients, Path=SelectedItem.id, Converter={x:Static local:InvestmentConverter.Instance}}"/>
 
                     </StackPanel>
 
@@ -137,7 +137,7 @@
                     <StackPanel Margin="5,0,0,5" Height="20" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Text="Баланс:  $"/>
                         <TextBlock FontSize="15" Text="{Binding ElementName=Clients,
-                            Path=SelectedItem.BankBalance}"/>
+                            Path=SelectedItem.bankBalance}"/>
                     </StackPanel>
 
                 </StackPanel>
@@ -148,7 +148,7 @@
                     <StackPanel Margin="5,0,0,5" Height="20" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Text="Баланс:  $"/>
                         <TextBlock FontSize="15" Text="{Binding ElementName=Clients,
-                            Path=SelectedItem.BankBalance}"/>
+                            Path=SelectedItem.bankBalance}"/>
                     </StackPanel>
                     <Button Width="100" Height="30" HorizontalAlignment="Left" Margin="5" Cursor="Hand" Command="{Binding TransferButton}">
                         <Button.Template>
@@ -187,11 +187,12 @@
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Name}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
+            <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Content}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
 
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
                       ItemsSource="{Binding JuridicalClients.Table.DefaultView, Mode=OneWay}"
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"
+                      SelectionChanged="Clients_SelectionChanged">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>
