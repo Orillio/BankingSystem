@@ -1,6 +1,5 @@
 ﻿using BankingSystem.DataBase;
 using ComandLib;
-using InvestmentLib;
 using MyExceptionsLib;
 using Newtonsoft.Json;
 using PropertiesChangedLib;
@@ -27,20 +26,12 @@ namespace BankingSystem
 
     public class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
-        #region Объект блокировки
-
-        object o = new object();
-        #endregion
 
         #region Базы данных
         public ClientsDataBase Clients { get; set; }
         public InvestmentsDataBase Investments { get; set; }
+        public TransactionsDataBase Transactions { get; set; }
 
-        #endregion
-
-        #region События
-        public event Action<TransactionInfo> OnPayment;
-        public event Action<TransactionInfo> OnReceive;
         #endregion
 
         #region Рандом
@@ -91,6 +82,7 @@ namespace BankingSystem
         public ICommand BalanceClick { get; set; }
         public ICommand TransferInfo { get; set; }
         public ICommand ChangeDep { get; set; }
+        public ICommand CopyCardNumber { get; set; }
 
         #endregion
 
@@ -105,13 +97,22 @@ namespace BankingSystem
 
         #region Свойства
 
-        private DataRowView GetInvestmentFromClient
+        public DataRowView GetInvestmentFromClient
         {
-            get => Investments.Table.DefaultView[Investments.Table.Rows.IndexOf(Investments.Table.AsEnumerable()
-                    .First(x => x.Field<int>("clientId") == (int)SelectedClient[0]))];
+            get
+            {
+                try
+                {
+                    return Investments.Table.DefaultView[Investments.Table.Rows.IndexOf(Investments.Table.AsEnumerable()
+                                .First(x => x.Field<int>("clientId") == (int)SelectedClient[0]))];
+                }
+                catch
+                {
+                    return null;
+                }
+            }
         }
         #endregion
-
 
         #region Конструктор
 
@@ -120,9 +121,9 @@ namespace BankingSystem
             #region DB init
 
             #region ClientCommands
-            var selectVip = @"SELECT * FROM Clients Order By Clients.id ";
-            var deleteVip = @"DELETE FROM Clients WHERE id = @id";
-            var insertVip = @"INSERT INTO Clients (clientName, clientLastname, clientPatronymic,
+            var select = @"SELECT * FROM Clients Order By Clients.id ";
+            var delete = @"DELETE FROM Clients WHERE id = @id";
+            var insert = @"INSERT INTO Clients (clientName, clientLastname, clientPatronymic,
                                                 clientAge, cardNumber, bankBalance, clientType)
                                         VALUES (@clientName, @clientLastname, @clientPatronymic,
                                                 @clientAge, @cardNumber, @bankBalance, @clientType)
@@ -152,108 +153,226 @@ namespace BankingSystem
 
             #endregion
 
-            Clients = new ClientsDataBase(selectVip, insertVip, updateVip, deleteVip);
-            Investments = new InvestmentsDataBase(selectInv, insertInv, updateInv, deleteInv);
+            #region Transactions Commands
+
+            var selectTrans = @"SELECT * FROM Transactions Order By Transactions.Id ";
+            var deleteTrans = @"DELETE FROM Transactions WHERE Id = @Id";
+            var insertTrans = @"INSERT INTO Transactions (ClientId, NameTarget, LastnameTarget,
+                                                PatronymicTarget, CardTarget, ClientTypeTarget, TransactionSum, Type)
+                                        VALUES (@ClientId, @NameTarget, @LastnameTarget,
+                                                @PatronymicTarget, @CardTarget, @ClientTypeTarget, @TransactionSum, @Type)
+                                        SET @Id = @@IDENTITY";
+            var updateTrans = @"UPDATE Transactions SET ClientId = @ClientId, NameTarget = @NameTarget,
+                                              LastnameTarget = @LastnameTarget,
+                                              PatronymicTarget = @PatronymicTarget,
+                                              CardTarget = @CardTarget,
+                                              ClientTypeTarget = @ClientTypeTarget,
+                                              TransactionSum = @TransactionSum,
+                                              Type = @Type
+                            WHERE Id = @Id";
             #endregion
 
-            FillClients(20);
+            Clients = new ClientsDataBase(select, insert, updateVip, delete);
+            Investments = new InvestmentsDataBase(selectInv, insertInv, updateInv, deleteInv);
+            Transactions = new TransactionsDataBase(selectTrans, insertTrans, updateTrans, deleteTrans);
+            #endregion
+
+            FillClients(200000);
 
             #region Команды
-            InfoClick = new Command(ClickInfo);
-            //WithdrawButton = new Command(() =>
-            //{
-            //    //Investments.Table.Rows.Remove(GetInvestmentFromClient.Row);
-            //    Investments.Table.AsEnumerable().First(x => (int)x["clientId"] == (int)SelectedClient[0]).Delete();
-            //    Investments.Update();
-            //    //Clients.Update();
-            //    Info.Close();
+            InfoClick = new Command(() => 
+            {
+                if (SelectedClient == null) return;
+                if (GetInvestmentFromClient == null)
+                {
+                    var result = MessageBox.Show("У выбранного клиента нет вклада. Хотите создать?", "Информация", MessageBoxButton.YesNo);
+                    if (result != MessageBoxResult.Yes) return;
 
-            //});
-            // вывод средств из вклада на счет
-            //InvestmentButton = new Command(() =>
-            //{
-            //    #region Обратные условия
-            //    if (string.IsNullOrEmpty(CreateInvest.InvestField.Text)) { MessageBox.Show("Ничего не введено"); return; }
-            //    if (!long.TryParse(CreateInvest.InvestField.Text, out long result)) { MessageBox.Show("Введена строка или слишком большое число"); return; }
-            //    if (SelectedClient.BankBalance < result) { MessageBox.Show($"Недостаточно средств для вклада. Ваши средства: {SelectedClient.BankBalance}$"); return; }
-            //    if (result < 500) { MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства: {SelectedClient.BankBalance}$"); return; }
-            //    if (SelectedInvType == null) { MessageBox.Show("Вы не выбрали тип вклада"); return; }
+                    CreateInvest = new InvestCreateWindow();
+                    CreateInvest.DataContext = this;
+                    CreateInvest.ShowDialog();
+                    Investments.Update();
+                    return;
+                }
+                try
+                {
+                    Info = new ClientInfoWindow
+                    {
+                        DataContext = GetInvestmentFromClient
+                    };
+                    Info.OnWithdraw += (e) =>
+                    {
+                        SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] + e;
+                        GetInvestmentFromClient.Row.Delete();
 
-            //    #endregion
+                        Investments.Update();
+                        Clients.Update();
+                        Info.Close();
+                    };
 
-            //    InvestmentType type = (string)SelectedInvType.Content == "С капитализацией" ? InvestmentType.Capitalization : InvestmentType.NotCapitalization;
-            //    ClientType clientType = SelectedClient.GetType() == typeof(Individual) ? ClientType.Individual : SelectedClient.GetType() == typeof(VIPClient) ? ClientType.VIP : ClientType.Juridical;
-            //    SelectedClient.Investment = new Investment(type, clientType, result, CurrentDate);
-            //    SelectedClient.BankBalance = SelectedClient.BankBalance - result;
-            //    CreateInvest.Close();
-            //    this.JsonSerializer();
-            //}); // окно открытия вклада
-            //TransferButton = new Command(() =>
-            //{
-            //    if (this.Transfer != null) return;
-            //    if (SelectedClient == null) return;
-            //    if (SelectedClient.BankBalance < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
-            //    Transfer = new TransferWindow();
-            //    Transfer.Closed += (sender, e) => { this.Transfer = null; };
-            //    Transfer.DataContext = this;
-            //    Transfer.ShowDialog();
-            //}); // открытие окна перевода средств
-            //TransferButtonWindow = new Command(() =>
-            //{
-            //    var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
-            //    string card = enumcard.Aggregate<char, string>(null, (current, item) => current + item);
+                    Info.Closed += (sender, e) => { this.Info = null; };
+                    Info.WithDraw.DataContext = this;
+                    Info.CurrentDate.DataContext = CurrentDate.ToShortDateString();
+                    Info.ShowDialog();
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message); }
 
-            //    #region Обратные условия
+            });
+            InvestmentButton = new Command(() =>
+            {
+                #region Обратные условия
+                if (string.IsNullOrEmpty(CreateInvest.InvestField.Text)) { MessageBox.Show("Ничего не введено"); return; }
 
-            //    if (string.IsNullOrEmpty(card)) { MessageBox.Show("Поле пустое"); return; }
-            //    if (!long.TryParse(card, out long result)) { MessageBox.Show("В поле для ввода карты введена строка или слишком большое число"); return; }
-            //    if (!CheckCardNumber(result, out AbstractClient client)) { MessageBox.Show("Такой карты не существует"); return; }
-            //    if (!long.TryParse(Transfer.TransferSum.Text, out long sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
-            //    if (SelectedClient.BankBalance < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства: {SelectedClient.BankBalance}$"); return; }
+                if (!int.TryParse(CreateInvest.InvestField.Text, out int result)) { MessageBox.Show("Введена строка или слишком большое число"); return; }
 
-            //    #endregion
-            //    MessageBoxResult res;
-            //    long newsum = 0;
-            //    OnPayment += SelectedClient.Transaction;
-            //    OnReceive += client.Transaction;
-            //    switch (SelectedClient.ClientType)
-            //    {
-            //        case ClientType.VIP:
-            //            newsum = sum;
-            //            res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {newsum}$", "Информация", MessageBoxButton.YesNo);
-            //            if (res != MessageBoxResult.Yes) return;
-            //            SelectedClient.BankBalance -= newsum;
-            //            client.BankBalance += newsum;
-            //            break;
-            //        case ClientType.Individual:
-            //            newsum = sum + (sum / 100 * 3);
-            //            res = MessageBox.Show($"Комиссия перевода - 3%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
-            //            if (res != MessageBoxResult.Yes) return;
-            //            SelectedClient.BankBalance -= newsum;
-            //            client.BankBalance += sum;
-            //            break;
-            //        case ClientType.Juridical:
-            //            newsum = sum + (sum / 100 * 2);
-            //            res = MessageBox.Show($"Комиссия перевода - 2%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
-            //            if (res != MessageBoxResult.Yes) return;
-            //            SelectedClient.BankBalance -= newsum;
-            //            client.BankBalance += sum;
-            //            break;
-            //        default:
-            //            break;
-            //    }
-            //    Transfer.Close();
-            //    var c = SelectedClient;
-            //    var payment = new TransactionInfo(client.FirstName, client.LastName, client.Patronymic, client.CardNumber,
-            //        -newsum, client.ClientType) { Type = TransactionType.Payment };
-            //    var receiver = new TransactionInfo(c.FirstName, c.LastName, c.Patronymic, c.CardNumber,
-            //        sum, c.ClientType) { Type = TransactionType.Receive };
-            //    OnPayment?.Invoke(payment);
-            //    OnReceive?.Invoke(receiver);
-            //    OnPayment -= SelectedClient.Transaction;
-            //    OnReceive -= client.Transaction;
-            //    this.JsonSerializer();
-            //}); // перевод средств на другой счет
+                if ((int)SelectedClient.Row["bankBalance"] < result) { MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
+                    $" {SelectedClient.Row["bankBalance"]}$"); return; }
+
+                if (result < 500) { MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
+                    $" {SelectedClient.Row["bankBalance"]}$"); return; }
+
+                if (SelectedInvType == null) { MessageBox.Show("Вы не выбрали тип вклада"); return; }
+
+                #endregion
+
+                InvestmentType type = (string)SelectedInvType.Content == "С капитализацией" ? InvestmentType.Capitalization : InvestmentType.NotCapitalization;
+                DataRow newInvest = Investments.Table.NewRow();
+                newInvest["clientId"] = SelectedClient["id"];
+                newInvest["investmentType"] = type.ToString();
+                newInvest["investmentDate"] = DateTime.Now.ToShortDateString();
+                newInvest["investmentSum"] = result;
+                newInvest["percentage"] = (string)SelectedClient.Row["clientType"] == "Juridical"
+                                            ? 9
+                                            : (string)SelectedClient.Row["clientType"] == "VIP"
+                                            ? 15
+                                            : 11;
+                Investments.Table.Rows.Add(newInvest);
+                SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] - result;
+                try
+                {
+                    Investments.Update();
+                    Clients.Update();
+                    MessageBox.Show("Вклад совершен!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"{ex.Message}: ERROR");
+                }
+                CreateInvest.Close();
+            });
+            TransferButton = new Command(() =>
+            {
+                if (this.Transfer != null) return;
+                if (SelectedClient == null) return;
+                if ((int)SelectedClient["bankBalance"] < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
+                Transfer = new TransferWindow();
+                Transfer.Closed += (sender, e) => { this.Transfer = null; };
+                Transfer.DataContext = this;
+                Transfer.ShowDialog();
+            });
+            TransferButtonWindow = new Command(() =>
+            {
+                var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
+                string card = enumcard.Aggregate<char, string>(null, (current, item) => current + item);
+
+                #region Обратные условия
+
+                if (string.IsNullOrEmpty(card)) { MessageBox.Show("Поле пустое"); return; }
+                if (!long.TryParse(card, out long result)) { MessageBox.Show("В поле для ввода карты введена строка или слишком большое число"); return; }
+                if (!CheckCardNumber(result, out DataRow targetClient)) { MessageBox.Show("Такой карты не существует"); return; }
+                if (!long.TryParse(Transfer.TransferSum.Text, out long sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
+                if ((int)SelectedClient["bankBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства: {SelectedClient["bankBalance"]}$"); return; }
+
+                #endregion
+                MessageBoxResult res;
+                long newsum = 0;
+                switch ((string)SelectedClient["clientType"])
+                {
+                    case "VIP":
+                        newsum = sum;
+                        res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {newsum}$", "Информация", MessageBoxButton.YesNo);
+                        if (res != MessageBoxResult.Yes) return;
+                        SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] - newsum;
+                        targetClient["bankBalance"] = (int)targetClient["bankBalance"] + newsum;
+                        break;
+                    case "Individual":
+                        newsum = sum + (sum / 100 * 3);
+                        if ((int)SelectedClient["bankBalance"] < newsum)
+                        {
+                            MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 3%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
+                            return;
+                        }
+                        res = MessageBox.Show($"Комиссия перевода - 3%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
+                        if (res != MessageBoxResult.Yes) return;
+                        SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] - newsum;
+                        targetClient["bankBalance"] = (int)targetClient["bankBalance"] + sum;
+                        break;
+                    case "Juridical":
+                        newsum = sum + (sum / 100 * 2);
+                        if ((int)SelectedClient["bankBalance"] < newsum)
+                        {
+                            MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 2%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
+                            return;
+                        }
+                        res = MessageBox.Show($"Комиссия перевода - 2%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
+                        if (res != MessageBoxResult.Yes) return;
+                        SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] - newsum;
+                        targetClient["bankBalance"] = (int)targetClient["bankBalance"] + sum;
+                        break;
+                    default:
+                        break;
+                }
+                Transfer.Close();
+                Clients.Update();
+                DataRow paymentTransaction = Transactions.Table.NewRow();
+
+                paymentTransaction["ClientId"] = targetClient[0];
+                paymentTransaction["NameTarget"] = SelectedClient[1];
+                paymentTransaction["LastnameTarget"] = SelectedClient[2];
+                paymentTransaction["PatronymicTarget"] = SelectedClient[3];
+                paymentTransaction["CardTarget"] = SelectedClient["cardNumber"];
+                paymentTransaction["ClientTypeTarget"] = SelectedClient["clientType"];
+                paymentTransaction["TransactionSum"] = sum;
+                paymentTransaction["Type"] = (int)TransactionType.Receive;
+
+                Transactions.Table.Rows.Add(paymentTransaction);
+
+                DataRow receiveTransaction = Transactions.Table.NewRow();
+
+                receiveTransaction["ClientId"] = SelectedClient[0];
+                receiveTransaction["NameTarget"] = targetClient[1];
+                receiveTransaction["LastnameTarget"] = targetClient[2];
+                receiveTransaction["PatronymicTarget"] = targetClient[3];
+                receiveTransaction["CardTarget"] = targetClient["cardNumber"];
+                receiveTransaction["ClientTypeTarget"] = targetClient["clientType"];
+                receiveTransaction["TransactionSum"] = -newsum;
+                receiveTransaction["Type"] = (int)TransactionType.Payment;
+
+                Transactions.Table.Rows.Add(receiveTransaction);
+
+                Transactions.Update();
+            });
+            TransferInfo = new Command(e =>
+            {
+                var client = e as DataRowView;
+                TransactionInfo = new TransactionInfoWindow();
+                try
+                {
+                    TransactionInfo.DataContext = Transactions.Table.AsEnumerable().Where(x => (int)x["ClientId"] == (int)client["id"])
+                        .CopyToDataTable().DefaultView;
+                }
+                catch
+                {
+                    MessageBox.Show("У выбранного клиента нет входящих или исходящих транзакций", "Ошибка", MessageBoxButton.OK);
+                    return;
+                }
+                TransactionInfo.Show();
+            });
+            CopyCardNumber = new Command(e =>
+            {
+                var client = (DataRowView)e;
+                Clipboard.SetText(client.Row["cardNumber"].ToString());
+            });
             //DepositButton = new Command(() =>
             //{
             //    if (SelectedClient == null) return;
@@ -638,13 +757,6 @@ namespace BankingSystem
             //    });
             //    th.Start();
             //});
-            //TransferInfo = new Command(e =>
-            //{
-            //    var client = e as AbstractClient;
-            //    TransactionInfo = new TransactionInfoWindow();
-            //    TransactionInfo.DataContext = client;
-            //    TransactionInfo.Show();
-            //});
             #endregion
 
 
@@ -843,55 +955,24 @@ namespace BankingSystem
             }
         }
         #endregion
-        private void ClickInfo() // выполняется при нажатии на кнопку информации
+
+        #region Проверки
+        private bool CheckCardNumber(long cardnumber, out DataRow client)
         {
-            if (SelectedClient == null) return;
-            if (Investments.Table.AsEnumerable()
-                .Where(x => x.Field<int>("clientId") == SelectedClient.Row.Field<int>("id")).Count() == 0)
-            {
-                var result = MessageBox.Show("У выбранного клиента нет вклада. Хотите создать?", "Информация", MessageBoxButton.YesNo);
-                if (result != MessageBoxResult.Yes) return;
-
-                CreateInvest = new InvestCreateWindow();
-                CreateInvest.DataContext = this;
-                CreateInvest.Closed += (sender, e) => { this.CreateInvest = null; };
-                CreateInvest.ShowDialog();
-                Investments.Update();
-                return;
-            }
-
             try
             {
-                Info = new ClientInfoWindow
-                {
-                    DataContext = GetInvestmentFromClient
-                };
-                Info.OnWithdraw += (e) =>
-                {
-                    SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] + e;
-                    //Investments.Table.AsEnumerable().First(x => (int)x["clientId"] == (int)SelectedClient[0]).Delete();
-                    GetInvestmentFromClient.Row.Delete();
-
-                    Investments.Update();
-                    Clients.Update();
-                    Info.Close();
-                };
-                
-                Info.Closed += (sender, e) => { this.Info = null; };
-                Info.WithDraw.DataContext = this;
-                Info.CurrentDate.DataContext = CurrentDate.ToShortDateString();
-                Info.ShowDialog();
+                client = Clients.Table.AsEnumerable().First(x => (long)x["cardNumber"] == cardnumber);
+                return true;
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message); }
-
-
-        }
-        private bool CheckCardNumber(long cardnumber, out AbstractClient client)
-        {
-            client = new Juridical("1","1", "1", ClientType.Individual, 1);
-            return false;
+            catch
+            {
+                client = null;
+                return false;
+            }
 
         } // проверка на существование клиента, и возвращение его
+
+        #endregion
     }
 }
 

@@ -33,9 +33,7 @@ namespace BankingSystem
 
         public static void AddTo<T>(this AbstractClient client, Department<T> department)
             where T : AbstractClient => department.Clients.Add(client as T);
-        public static void Update(this ClientsDataBase db) =>
-            db.Adapter.Update(db.Table);
-        public static void Update(this InvestmentsDataBase db) =>
+        public static void Update(this IDataBase db) =>
             db.Adapter.Update(db.Table);
     }
 }

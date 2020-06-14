@@ -11,7 +11,7 @@
         WindowStartupLocation="CenterScreen">
     <StackPanel Orientation="Vertical">
         <TextBlock Text="Информация о транзакциях" FontSize="15" TextAlignment="Center" Margin="0 0 0 5"/>
-        <ListView ItemsSource="{Binding Transactions}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListView ItemsSource="{Binding }" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListView.View>
                 <GridView>
                     <GridViewColumn>

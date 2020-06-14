@@ -10,6 +10,17 @@
         MinHeight="600" MinWidth="900"
         MaxHeight="600" MaxWidth="900"
         Icon="img/bank.png">
+    <Window.Resources>
+        <ContextMenu x:Key="Menu">
+            <ContextMenu.Items>
+                <MenuItem Header="Скопировать номер карты" Command="{Binding DataContext.CopyCardNumber, RelativeSource={RelativeSource AncestorType=Window}}"
+                          CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Mode=Self}}"/>
+            </ContextMenu.Items>
+        </ContextMenu>
+        <Style x:Key="Copy" TargetType="{x:Type ListViewItem}">
+            <Setter Property="ContextMenu" Value="{StaticResource Menu}" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition/>
@@ -187,10 +198,10 @@
             </Grid.RowDefinitions>
 
             <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Content}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
-
+            
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"
-                      SelectionChanged="Clients_SelectionChanged">
+                      SelectionChanged="Clients_SelectionChanged" ItemContainerStyle="{StaticResource Copy}" SelectionMode="Single">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>

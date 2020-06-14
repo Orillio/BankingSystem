@@ -42,22 +42,19 @@ namespace BankingSystem
         {
             if (Clients.SelectedIndex == -1) return;
             DataRow client = null;
-            try
+            if ((DataContext as Bank).GetInvestmentFromClient != null)
             {
-                 client = (DataContext as Bank).Investments.Table.AsEnumerable()
-                    .First(x => x.Field<int>(1) == (Clients.SelectedItem as DataRowView).Row
-                    .Field<int>(0));
+                client = (DataContext as Bank).GetInvestmentFromClient.Row;
             }
-            catch
+            else
             {
                 DepositField.Text = "Отсутствует";
                 return;
             }
+
             DepositField.Text = client.Field<string>(2) == "NotCapitalization"
                 ? "Без капитализации"
                 : "С капитализацией";
-                    
-
         }
     }
 }

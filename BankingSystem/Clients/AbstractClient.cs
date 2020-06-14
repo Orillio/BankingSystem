@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using InvestmentLib;
 using PropertiesChangedLib;
 using TransactionLib;
 using static EnumsLib.Enums;
@@ -15,7 +14,6 @@ namespace BankingSystem
         public int Age { get; set; }
         public long BankBalance { get; set; }
         public long CardNumber { get; set; }
-        public Investment Investment { get; set; }
         public ObservableCollection<TransactionInfo> Transactions { get; set; }
         public AbstractClient(string name, string lastname, string patronymic, ClientType clientType, int age)
         {
@@ -25,7 +23,6 @@ namespace BankingSystem
             this.LastName = lastname;
             this.Patronymic = patronymic;
             this.Age = age;
-            this.Investment = null;
             this.BankBalance = 0;
         }
         public void Transaction(TransactionInfo e) => Transactions.Add(e);

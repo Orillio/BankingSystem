@@ -84,6 +84,7 @@
     <Compile Include="Converter\TransactionInfoConverter.cs" />
     <Compile Include="DataBase\IDataBase.cs" />
     <Compile Include="DataBase\InvestmentsDataBase.cs" />
+    <Compile Include="DataBase\TransactionsDataBase.cs" />
     <Compile Include="Departments\Department.cs" />
     <Compile Include="DepositWindow.xaml.cs">
       <DependentUpon>DepositWindow.xaml</DependentUpon>
