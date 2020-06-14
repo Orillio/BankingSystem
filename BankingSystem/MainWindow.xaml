@@ -128,8 +128,7 @@
                             </Button.Template>
                         </Button>
 
-                        <TextBlock x:Name="DepositField" FontSize="15" VerticalAlignment="Center"
-                                   Text="{Binding ElementName=Clients, Path=SelectedItem.id, Converter={x:Static local:InvestmentConverter.Instance}}"/>
+                        <TextBlock x:Name="DepositField" FontSize="15" VerticalAlignment="Center"/>
 
                     </StackPanel>
 
@@ -190,7 +189,6 @@
             <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Content}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
 
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
-                      ItemsSource="{Binding JuridicalClients.Table.DefaultView, Mode=OneWay}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"
                       SelectionChanged="Clients_SelectionChanged">
                 <ListView.View>

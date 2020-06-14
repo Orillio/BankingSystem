@@ -62,7 +62,7 @@ namespace BankingSystem
         #endregion
 
         #region Переданные данные через View
-        public AbstractClient SelectedClient { get; set; } // Информация о выбранном клиенте, которая передается через View
+        public DataRowView SelectedClient { get; set; }
         public DateTime CurrentDate { get; set; } = DateTime.Now;
         public ComboBoxItem SelectedInvType { get; set; }
         public ListView ListOfClients { get; set; }
@@ -94,12 +94,24 @@ namespace BankingSystem
 
         #endregion
 
-        #region Дополнительные переменные для сортировки
+        #region Дополнительные поля
         bool namedesc = false;
         bool lastdesc = false;
         bool patrdesc = false;
         bool balancedesc = false;
+
+        int currentSum = default;
         #endregion
+
+        #region Свойства
+
+        private DataRowView GetInvestmentFromClient
+        {
+            get => Investments.Table.DefaultView[Investments.Table.Rows.IndexOf(Investments.Table.AsEnumerable()
+                    .First(x => x.Field<int>("clientId") == (int)SelectedClient[0]))];
+        }
+        #endregion
+
 
         #region Конструктор
 
@@ -120,7 +132,7 @@ namespace BankingSystem
                                               clientAge = @clientAge,
                                               cardNumber = @cardNumber,
                                               bankBalance = @bankBalance,
-                                              clientType = @clientType,
+                                              clientType = @clientType
                           WHERE id = @id";
             #endregion
 
@@ -128,14 +140,15 @@ namespace BankingSystem
 
             var selectInv = @"SELECT * FROM Investments Order By Investments.Id ";
             var deleteInv = @"DELETE FROM Investments WHERE Id = @Id";
-            var insertInv = @"INSERT INTO Investments (clientId, investmentType, investmentDate, investmentSum)
-                                            VALUES (@clientId, @investmentType, @investmentDate,@investmentSum)";
-
+            var insertInv = @"INSERT INTO Investments (clientId, investmentType, investmentDate, investmentSum, percentage)
+                                            VALUES (@clientId, @investmentType, @investmentDate,@investmentSum, @percentage)
+                                            SET @Id = @@IDENTITY";
             var updateInv = @"UPDATE Investments SET clientId = @clientId,
                                                     investmentType = @investmentType
                                                     investmentDate = @investmentDate
                                                     investmentSum = @investmentSum
-                          WHERE id = @id";
+                                                    percentage = @percentage
+                          WHERE Id = @Id";
 
             #endregion
 
@@ -143,25 +156,20 @@ namespace BankingSystem
             Investments = new InvestmentsDataBase(selectInv, insertInv, updateInv, deleteInv);
             #endregion
 
-            FillClients(10);
+            FillClients(20);
 
             #region Команды
-
-
-
-
-            //InfoClick = new Command(ClickInfo); // открытие информационной панели о вкладе
+            InfoClick = new Command(ClickInfo);
             //WithdrawButton = new Command(() =>
             //{
-            //    var res = MessageBox.Show($"Вы уверены что хотите вывести вклад? Вы выведите {SelectedClient.Investment.CurrentSum}$", "",
-            //        MessageBoxButton.YesNo, MessageBoxImage.Question);
-            //    if (res != MessageBoxResult.Yes) return;
-            //    SelectedClient.BankBalance += SelectedClient.Investment.CurrentSum;
-            //    SelectedClient.Investment = null;
+            //    //Investments.Table.Rows.Remove(GetInvestmentFromClient.Row);
+            //    Investments.Table.AsEnumerable().First(x => (int)x["clientId"] == (int)SelectedClient[0]).Delete();
+            //    Investments.Update();
+            //    //Clients.Update();
             //    Info.Close();
-            //    this.JsonSerializer();
 
-            //}); // вывод средств из вклада на счет
+            //});
+            // вывод средств из вклада на счет
             //InvestmentButton = new Command(() =>
             //{
             //    #region Обратные условия
@@ -759,12 +767,13 @@ namespace BankingSystem
                 }
             return null;
         } // репозиторий ФИО
-
         private DataRow RandomInvest()
         {
             DataRow data = Investments.Table.NewRow();
             data["investmentSum"] = Random.Next(500, 1000000);
-            data["investmentDate"] = new DateTime(Random.Next(2015, 2020), Random.Next(1,13), Random.Next(1,28));
+            data["investmentDate"] = new DateTime(Random.Next(2015, 2020),
+                Random.Next(1,13), Random.Next(1,28)).ToShortDateString();
+
             if (Random.Next(1,3) == 1)
             {
                 data["investmentType"] = InvestmentType.Capitalization.ToString();
@@ -801,8 +810,6 @@ namespace BankingSystem
 
             FillRandomInvestmentInClients();
         }
-        #endregion
-
         private void FillRandomInvestmentInClients()
         {
             foreach (DataRow row in Clients.Table.Rows)
@@ -810,6 +817,9 @@ namespace BankingSystem
                 if (Random.Next(1, 3) == 1)
                 {
                     var inv = RandomInvest();
+                    if ((string)row[5] == "VIP") inv["percentage"] = 15;
+                    if ((string)row[5] == "Juridical") inv["percentage"] = 9;
+                    if ((string)row[5] == "Individual") inv["percentage"] = 11;
                     inv["clientId"] = row["id"];
                     Investments.Table.Rows.Add(inv);
                 }
@@ -832,13 +842,13 @@ namespace BankingSystem
                 db.Table.Rows.Add(data);
             }
         }
+        #endregion
         private void ClickInfo() // выполняется при нажатии на кнопку информации
         {
-            if (Info != null) return;
             if (SelectedClient == null) return;
-            if (SelectedClient.Investment == null)
+            if (Investments.Table.AsEnumerable()
+                .Where(x => x.Field<int>("clientId") == SelectedClient.Row.Field<int>("id")).Count() == 0)
             {
-                if (CreateInvest != null) return;
                 var result = MessageBox.Show("У выбранного клиента нет вклада. Хотите создать?", "Информация", MessageBoxButton.YesNo);
                 if (result != MessageBoxResult.Yes) return;
 
@@ -846,16 +856,30 @@ namespace BankingSystem
                 CreateInvest.DataContext = this;
                 CreateInvest.Closed += (sender, e) => { this.CreateInvest = null; };
                 CreateInvest.ShowDialog();
+                Investments.Update();
                 return;
             }
 
             try
             {
-                SelectedClient.Investment.CurrentDate = this.CurrentDate;
-                Info = new ClientInfoWindow();
-                Info.DataContext = SelectedClient;
+                Info = new ClientInfoWindow
+                {
+                    DataContext = GetInvestmentFromClient
+                };
+                Info.OnWithdraw += (e) =>
+                {
+                    SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] + e;
+                    //Investments.Table.AsEnumerable().First(x => (int)x["clientId"] == (int)SelectedClient[0]).Delete();
+                    GetInvestmentFromClient.Row.Delete();
+
+                    Investments.Update();
+                    Clients.Update();
+                    Info.Close();
+                };
+                
                 Info.Closed += (sender, e) => { this.Info = null; };
                 Info.WithDraw.DataContext = this;
+                Info.CurrentDate.DataContext = CurrentDate.ToShortDateString();
                 Info.ShowDialog();
             }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
@@ -870,3 +894,4 @@ namespace BankingSystem
         } // проверка на существование клиента, и возвращение его
     }
 }
+

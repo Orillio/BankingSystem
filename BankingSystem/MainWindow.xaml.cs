@@ -20,6 +20,7 @@ namespace BankingSystem
 
         private void Deps_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            DepositField.Text = "";
             if (Deps.SelectedIndex == 0)
             {
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
@@ -39,6 +40,7 @@ namespace BankingSystem
 
         private void Clients_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (Clients.SelectedIndex == -1) return;
             DataRow client = null;
             try
             {

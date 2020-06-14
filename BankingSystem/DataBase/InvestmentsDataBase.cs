@@ -30,6 +30,7 @@ namespace BankingSystem.DataBase
 
             Table = new DataTable();
             Adapter = new SqlDataAdapter();
+            Connection.Open();
 
             #region SELECT Command
 
@@ -41,10 +42,12 @@ namespace BankingSystem.DataBase
 
             Adapter.InsertCommand = new SqlCommand(insert, Connection);
 
-            Adapter.InsertCommand.Parameters.Add("@clientId", SqlDbType.Int, 10,"clientId" );
+            Adapter.InsertCommand.Parameters.Add("@Id", SqlDbType.Int, 10,"Id" ).Direction = ParameterDirection.Output;
+            Adapter.InsertCommand.Parameters.Add("@clientId", SqlDbType.Int, 10, "clientId");
             Adapter.InsertCommand.Parameters.Add("@investmentType", SqlDbType.NVarChar, 20, "investmentType");
             Adapter.InsertCommand.Parameters.Add("@investmentSum", SqlDbType.Int, 10, "investmentSum");
-            Adapter.InsertCommand.Parameters.Add("@investmentDate", SqlDbType.DateTime, 20, "investmentDate");
+            Adapter.InsertCommand.Parameters.Add("@investmentDate", SqlDbType.NVarChar, 20, "investmentDate");
+            Adapter.InsertCommand.Parameters.Add("@percentage", SqlDbType.Int, 20, "percentage");
 
             #endregion
 
@@ -52,10 +55,12 @@ namespace BankingSystem.DataBase
 
             Adapter.UpdateCommand = new SqlCommand(update, Connection);
 
+            Adapter.UpdateCommand.Parameters.Add("@Id", SqlDbType.Int, 10, "Id").SourceVersion = DataRowVersion.Original;
             Adapter.UpdateCommand.Parameters.Add("@clientId", SqlDbType.Int, 10, "clientId");
             Adapter.UpdateCommand.Parameters.Add("@investmentType", SqlDbType.NVarChar, 20, "investmentType");
             Adapter.UpdateCommand.Parameters.Add("@investmentSum", SqlDbType.Int, 10, "investmentSum");
-            Adapter.UpdateCommand.Parameters.Add("@investmentDate", SqlDbType.DateTime, 20, "investmentDate");
+            Adapter.UpdateCommand.Parameters.Add("@investmentDate", SqlDbType.NVarChar, 20, "investmentDate");
+            Adapter.UpdateCommand.Parameters.Add("@percentage", SqlDbType.Int, 20, "percentage");
 
             #endregion
 
@@ -63,8 +68,8 @@ namespace BankingSystem.DataBase
 
             Adapter.DeleteCommand = new SqlCommand(delete, Connection);
 
-            Adapter.UpdateCommand.Parameters.Add("@Id", SqlDbType.Int, 10, "Id");
-            Adapter.UpdateCommand.Parameters.Add("@clientId", SqlDbType.Int, 10, "clientId");
+            Adapter.DeleteCommand.Parameters.Add("@Id", SqlDbType.Int, 10, "Id");
+            Adapter.DeleteCommand.Parameters.Add("@clientId", SqlDbType.Int, 10, "clientId");
 
             #endregion
 

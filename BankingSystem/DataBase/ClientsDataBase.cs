@@ -26,6 +26,7 @@ namespace BankingSystem
                 InitialCatalog = "LocalDB"
             };
             Connection = new SqlConnection(con.ConnectionString);
+            Connection.Open();
             #endregion
 
             Table = new DataTable();
