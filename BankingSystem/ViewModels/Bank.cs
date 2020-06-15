@@ -18,6 +18,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using TransactionLib;
 using static EnumsLib.Enums;
 
@@ -56,9 +57,23 @@ namespace BankingSystem
         public DataRowView SelectedClient { get; set; }
         public DateTime CurrentDate { get; set; } = DateTime.Now;
         public ComboBoxItem SelectedInvType { get; set; }
-        public ListView ListOfClients { get; set; }
-        public ComboBoxItem SelectedClientType { get; set; }
         public ComboBoxItem EditSelectedClientType { get; set; }
+        public int SelectedDep { get; set; }
+        public string SelectedDepName
+        {
+            get
+            {
+                switch (SelectedDep)
+                {
+                    case 0: return "Individual";
+                    case 1: return "Juridical";
+                    case 2: return "VIP";
+                    default:
+                        return null;
+                }
+            }
+        }
+        public ComboBoxItem SelectedClientType { get; set; }
 
         //сделай датаконтекст листвью здесь, чтобы он заполнялся от выбранного отдела
         #endregion
@@ -66,7 +81,6 @@ namespace BankingSystem
         #region Команды
         public ICommand InvestmentButton { get; set; } 
         public ICommand InfoClick { get; set; }
-        public ICommand WithdrawButton { get; set; }
         public ICommand TransferButton { get; set; }
         public ICommand TransferButtonWindow { get; set; }
         public ICommand DepositButton { get; set; }
@@ -80,9 +94,12 @@ namespace BankingSystem
         public ICommand LastClick { get; set; }
         public ICommand PatrClick { get; set; }
         public ICommand BalanceClick { get; set; }
+        public ICommand IdClick { get; set; }
         public ICommand TransferInfo { get; set; }
-        public ICommand ChangeDep { get; set; }
         public ICommand CopyCardNumber { get; set; }
+        public ICommand Search { get; set; }
+        public ICommand GotSearchFocus { get; set; }
+        public ICommand LostSearchFocus { get; set; }
 
         #endregion
 
@@ -91,8 +108,8 @@ namespace BankingSystem
         bool lastdesc = false;
         bool patrdesc = false;
         bool balancedesc = false;
+        bool iddesc = true;
 
-        int currentSum = default;
         #endregion
 
         #region Свойства
@@ -177,9 +194,32 @@ namespace BankingSystem
             Transactions = new TransactionsDataBase(selectTrans, insertTrans, updateTrans, deleteTrans);
             #endregion
 
-            FillClients(200000);
+            FillClients(2000);
 
             #region Команды
+
+            #region Placeholder
+            GotSearchFocus = new Command(e =>
+            {
+                var box = e as TextBox;
+                if (box.Text == "Поиск")
+                {
+                    box.Text = string.Empty;
+                    box.Foreground = Brushes.Black;
+                }
+            });
+            LostSearchFocus = new Command(e =>
+            {
+                var box = e as TextBox;
+                if (box.Text == string.Empty)
+                {
+                    box.Text = "Поиск";
+                    box.Foreground = Brushes.Gray;
+                }
+            });
+
+            #endregion
+
             InfoClick = new Command(() => 
             {
                 if (SelectedClient == null) return;
@@ -412,345 +452,168 @@ namespace BankingSystem
                 if (res > 200) { MessageBox.Show("Введен невозможный для человека возраст"); return; }
                 if (SelectedClientType == null) { MessageBox.Show("Вы не выбрали тип клиента"); return; }
                 DataRow newClient = Clients.Table.NewRow();
-                if (SelectedClientType.Tag.Equals("VIP"))
+
+                SetClientProps((string)SelectedClientType.Tag);
+
+                AddClient.Close();
+                void SetClientProps(string type)
                 {
+                    long card = long.Parse(CardRandom(Random));
+                    while (CheckCardNumber(card, out var a))
+                    {
+                        card = long.Parse(CardRandom(Random));
+                    }
                     newClient[1] = AddClient.Name.Text;
                     newClient[2] = AddClient.Lastname.Text;
                     newClient[3] = AddClient.Patromymic.Text;
                     newClient[4] = AddClient.Age.Text;
-                    newClient[5] = "VIP";   
-                    newClient[6] = CardRandom(Random);
+                    newClient[5] = type;
+                    newClient[6] = card;
                     newClient[7] = 0;
+                    Clients.Table.Rows.Add(newClient);
+                    Clients.Update();
                 }
-                else if (SelectedClientType.Tag.Equals("Indiv"))
+
+            }); // добавление клиента
+            Search = new Command(e =>
+            {
+                ListView clients = ((object[])e)[0] as ListView;
+                string searchField = ((object[])e)[1].ToString().ToLower();
+
+                var selectedDepartmentClients = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName);
+
+                if (searchField == "Поиск".ToLower() || searchField == string.Empty)
                 {
+                    clients.ItemsSource = selectedDepartmentClients.AsDataView();
                 }
                 else
                 {
+                    clients.ItemsSource = selectedDepartmentClients.Where(x => x[0].ToString().ToLower().Contains(searchField) || x[1].ToString().ToLower().Contains(searchField)
+                    || x[2].ToString().ToLower().Contains(searchField) || x[3].ToString().ToLower().Contains(searchField) || x[4].ToString().ToLower().Contains(searchField) 
+                    || x[6].ToString().Equals(searchField)).AsDataView();
                 }
-                AddClient.Close();
 
-            }); // добавление клиента
-            //EditClientButton = new Command(() =>
-            //{
-            //    if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }
-            //    EditClient = new EditClientWindow();
-            //    EditClient.DataContext = this;
-            //    EditClient.ShowDialog();
-            //}); // открытие окна изменения клиента
-            //EditClientButtonWindow = new Command(() =>
-            //{
-            //    if (EditClient.Age.Text != "" && EditClient.Age.Text.Trim(' ') != "")
-            //    {
-            //        if (int.Parse(EditClient.Age.Text) > 200) { MessageBox.Show("Вы ввели нереальный возраст"); return; }
-            //        SelectedClient.Age = int.Parse(EditClient.Age.Text);
-            //    }
-            //    if (EditClient.Name.Text != "" && EditClient.Name.Text.Trim(' ') != "") SelectedClient.FirstName = EditClient.Name.Text;
-            //    if (EditClient.Lastname.Text != "" && EditClient.Lastname.Text.Trim(' ') != "") SelectedClient.LastName = EditClient.Lastname.Text;
-            //    if (EditClient.Patronymic.Text != "" && EditClient.Patronymic.Text.Trim(' ') != "") SelectedClient.Patronymic = EditClient.Patronymic.Text;
-            //    if (EditSelectedClientType != null)
-            //    {
-            //        ClientType cltype = EditSelectedClientType.Tag.Equals("VIP") ? ClientType.VIP : EditSelectedClientType.Tag.Equals("Indiv") ? ClientType.Individual : ClientType.Juridical;
-            //        if (SelectedClient.ClientType == cltype) { EditClient.Close(); this.JsonSerializer(); return; }
-            //        else
-            //        {
-            //            var c = SelectedClient;
-            //            switch (cltype)
-            //            {
-            //                case ClientType.VIP:
+            });
+            EditClientButton = new Command(() =>
+            {
+                if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }
+                EditClient = new EditClientWindow();
+                EditClient.DataContext = this;
+                EditClient.ShowDialog();
+            }); // открытие окна изменения клиента
+            EditClientButtonWindow = new Command(() =>
+            {
+                if (EditClient.Age.Text != "" && EditClient.Age.Text.Trim(' ') != "")
+                {
+                    if (int.Parse(EditClient.Age.Text) > 200) { MessageBox.Show("Вы ввели нереальный возраст"); return; }
+                    SelectedClient["clientAge"] = int.Parse(EditClient.Age.Text);
+                }
+                if (EditClient.Name.Text != "" && EditClient.Name.Text.Trim(' ') != "") SelectedClient.Row["clientName"] = EditClient.Name.Text;
+                if (EditClient.Lastname.Text != "" && EditClient.Lastname.Text.Trim(' ') != "") SelectedClient.Row["clientLastname"] = EditClient.Lastname.Text;
+                if (EditClient.Patronymic.Text != "" && EditClient.Patronymic.Text.Trim(' ') != "") SelectedClient.Row["clientPatronymic"] = EditClient.Patronymic.Text;
+                if (EditSelectedClientType != null)
+                {
+                    if ((string)SelectedClient.Row["clientType"] == (string)EditSelectedClientType.Tag) { EditClient.Close(); Clients.Update(); return; }
+                    else
+                    {
+                        SelectedClient.Row["clientType"] = (string)EditSelectedClientType.Tag; 
+                        Clients.Update();
+                        EditClient.Close();
+                    }
+                }
+                else { EditClient.Close(); Clients.Update(); return; }
+            }); // изменение клиента
+            DeleteClient = new Command(() =>
+            {
+                if (SelectedClient == null) { MessageBox.Show("Клиент не выбран"); return; }
+                var res = MessageBox.Show("Вы уверены, что хотите удалить клиента?", "", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (res == MessageBoxResult.No) return;
+                SelectedClient.Row.Delete();
+                Clients.Table.AcceptChanges();
 
-            //                    var vip = new VIPClient(c.FirstName, c.LastName, c.Patronymic, ClientType.VIP, c.Age)
-            //                    { BankBalance = c.BankBalance, Investment = c.Investment, CardNumber = c.CardNumber };
-            //                    vip.AddTo(DepItems[2] as Department<VIPClient>);
-            //                    break;
-            //                case ClientType.Individual:
-            //                    var ind = new Individual(c.FirstName, c.LastName, c.Patronymic, ClientType.Individual, c.Age)
-            //                    { BankBalance = c.BankBalance, Investment = c.Investment, CardNumber = c.CardNumber };
-            //                    ind.AddTo(DepItems[1] as Department<Individual>);
-            //                    break;
-            //                case ClientType.Juridical:
-            //                    var jur = new Juridical(c.FirstName, c.LastName, c.Patronymic, ClientType.Juridical, c.Age)
-            //                    { BankBalance = c.BankBalance, Investment = c.Investment, CardNumber = c.CardNumber };
-            //                    jur.AddTo(DepItems[0] as Department<Juridical>);
-            //                    break;
-            //                default:
-            //                    break;
-            //            }
-            //            switch (c.ClientType)
-            //            {
-            //                case ClientType.VIP:
-            //                    SelectedClient.RemoveFrom(DepItems[2] as Department<VIPClient>);
-            //                    SelectedClient = null;
-            //                    break;
-            //                case ClientType.Individual:
-            //                    SelectedClient.RemoveFrom(DepItems[1] as Department<Individual>);
-            //                    SelectedClient = null;
-            //                    break;
-            //                case ClientType.Juridical:
-            //                    SelectedClient.RemoveFrom(DepItems[0] as Department<Juridical>);
-            //                    SelectedClient = null;
-            //                    break;
-            //                default:
-            //                    break;
-            //            }
-            //            EditClient.Close();
-            //            this.JsonSerializer();
-
-            //        }
-            //    }
-            //    else { EditClient.Close(); this.JsonSerializer(); return; }
-            //}); // изменение клиента
-            //DeleteClient = new Command(() =>
-            //{
-            //    if (SelectedClient == null) { MessageBox.Show("Клиент не выбран"); return; }
-            //    var res = MessageBox.Show("Вы уверены, что хотите удалить клиента?", "", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            //    if (res == MessageBoxResult.No) return;
-            //    switch (SelectedClient.ClientType)
-            //    {
-            //        case ClientType.VIP:
-            //            (DepItems[2] as Department<VIPClient>).Clients.Remove(SelectedClient as VIPClient);
-            //            SelectedClient = null;
-            //            break;
-            //        case ClientType.Individual:
-            //            (DepItems[1] as Department<Individual>).Clients.Remove(SelectedClient as Individual);
-            //            SelectedClient = null;
-            //            break;
-            //        case ClientType.Juridical:
-            //            (DepItems[0] as Department<Juridical>).Clients.Remove(SelectedClient as Juridical);
-            //            SelectedClient = null;
-            //            break;
-            //        default:
-            //            break;
-            //    }
-            //    this.JsonSerializer();
-            //});
-            //NameClick = new Command(() =>
-            //{
-            //    Load = new LoadingScreen();
-            //    Load.Show();
-            //    lastdesc = false;
-            //    patrdesc = false;
-            //    balancedesc = false;
-            //    Thread th = new Thread(() =>
-            //    {
-            //        if (SelectedDepartment is Department<VIPClient>)
-            //        {
-            //            var c = (DepItems[2] as Department<VIPClient>).Clients;
-            //            if (!namedesc)
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.FirstName, true);
-            //                namedesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.FirstName, false);
-            //                namedesc = false;
-            //            }
-            //        }
-            //        else if (SelectedDepartment is Department<Individual>)
-            //        {
-            //            var c = (DepItems[1] as Department<Individual>).Clients;
-            //            if (!namedesc)
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.FirstName, true);
-            //                namedesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.FirstName, false);
-            //                namedesc = false;
-            //            }
-            //        }
-            //        else
-            //        {
-            //            var c = (DepItems[0] as Department<Juridical>).Clients;
-            //            if (!namedesc)
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.FirstName, true);
-            //                namedesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.FirstName, false);
-            //                namedesc = false;
-
-            //            }
-            //        }
-            //        Application.Current.Dispatcher.Invoke(() => Load.Close());
-            //    });
-            //    th.Start();
-            //});
-            //LastClick = new Command(() =>
-            //{
-            //    Load = new LoadingScreen();
-            //    Load.Show();
-            //    namedesc = false;
-            //    patrdesc = false;
-            //    balancedesc = false;
-            //    var th = new Thread(() =>
-            //    {
-            //        if (SelectedDepartment is Department<VIPClient>)
-            //        {
-            //            var c = (DepItems[2] as Department<VIPClient>).Clients;
-            //            if (!lastdesc)
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.LastName, true);
-            //                lastdesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.LastName, false);
-            //                lastdesc = false;
-            //            }
-            //        }
-            //        else if (SelectedDepartment is Department<Individual>)
-            //        {
-            //            var c = (DepItems[1] as Department<Individual>).Clients;
-            //            if (!lastdesc)
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.LastName, true);
-            //                lastdesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.LastName, false);
-            //                namedesc = false;
-
-            //            }
-            //        }
-            //        else
-            //        {
-            //            var c = (DepItems[0] as Department<Juridical>).Clients;
-            //            if (!lastdesc)
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.LastName, true);
-            //                lastdesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.LastName, false);
-            //                lastdesc = false;
-
-            //            }
-            //        }
-            //        Application.Current.Dispatcher.Invoke(() => Load.Close());
-            //    });
-            //    th.Start();
-            //});
-            //PatrClick = new Command(() =>
-            //{
-            //    Load = new LoadingScreen();
-            //    Load.Show();
-            //    namedesc = false;
-            //    lastdesc = false;
-            //    balancedesc = false;
-            //    Thread th = new Thread(() =>
-            //    {
-            //        if (SelectedDepartment is Department<VIPClient>)
-            //        {
-            //            var c = (DepItems[2] as Department<VIPClient>).Clients;
-            //            if (!patrdesc)
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.Patronymic, true);
-            //                patrdesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.Patronymic, false);
-            //                patrdesc = false;
-            //            }
-            //        }
-            //        else if (SelectedDepartment is Department<Individual>)
-            //        {
-            //            var c = (DepItems[1] as Department<Individual>).Clients;
-            //            if (!patrdesc)
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.Patronymic, true);
-            //                patrdesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.Patronymic, false);
-            //                patrdesc = false;
-
-            //            }
-            //        }
-            //        else
-            //        {
-            //            var c = (DepItems[0] as Department<Juridical>).Clients;
-            //            if (!patrdesc)
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.Patronymic, true);
-            //                patrdesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.Patronymic, false);
-            //                patrdesc = false;
-
-            //            }
-            //        }
-            //        Application.Current.Dispatcher.Invoke(() => Load.Close());
-            //    });
-            //    th.Start();
-            //});
-            //BalanceClick = new Command(() =>
-            //{
-            //    Load = new LoadingScreen();
-            //    Load.Show();
-            //    namedesc = false;
-            //    lastdesc = false;
-            //    patrdesc = false;
-            //    Thread th = new Thread(() =>
-            //    {
-            //        if (SelectedDepartment is Department<VIPClient>)
-            //        {
-            //            var c = (DepItems[2] as Department<VIPClient>).Clients;
-            //            if (!balancedesc)
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.BankBalance, true);
-            //                balancedesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[2] as Department<VIPClient>).Order(x => x.BankBalance, false);
-            //                balancedesc = false;
-            //            }
-            //        }
-            //        else if (SelectedDepartment is Department<Individual>)
-            //        {
-            //            var c = (DepItems[1] as Department<Individual>).Clients;
-            //            if (!balancedesc)
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.BankBalance, true);
-            //                balancedesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[1] as Department<Individual>).Order(x => x.BankBalance, false);
-            //                balancedesc = false;
-
-            //            }
-            //        }
-            //        else
-            //        {
-            //            var c = (DepItems[0] as Department<Juridical>).Clients;
-            //            if (!balancedesc)
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.BankBalance, true);
-            //                balancedesc = true;
-            //            }
-            //            else
-            //            {
-            //                (DepItems[0] as Department<Juridical>).Order(x => x.BankBalance, false);
-            //                balancedesc = false;
-
-            //            }
-            //        }
-            //        Application.Current.Dispatcher.Invoke(() => Load.Close());
-            //    });
-            //    th.Start();
-            //});
+                Clients.Update();
+            });
+            NameClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                lastdesc = false;
+                patrdesc = false;
+                balancedesc = false;
+                iddesc = true;
+                if (namedesc)
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["clientName"]).AsDataView();
+                }
+                else
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["clientName"]).AsDataView();
+                }
+                namedesc = !namedesc;
+            });
+            LastClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                patrdesc = false;
+                balancedesc = false;
+                iddesc = true;
+                if (lastdesc)
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["clientLastname"]).AsDataView();
+                else
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["clientLastname"]).AsDataView();
+                lastdesc = !lastdesc;
+            });
+            PatrClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                balancedesc = false;
+                iddesc = true;
+                if (patrdesc)
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["clientPatronymic"]).AsDataView();
+                }
+                else
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["clientPatronymic"]).AsDataView();
+                }
+                patrdesc = !patrdesc;
+            });
+            BalanceClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                patrdesc = false;
+                iddesc = true;
+                if (balancedesc)
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["bankBalance"]).AsDataView();
+                }
+                else
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["bankBalance"]).AsDataView();
+                }
+                balancedesc = !balancedesc;
+            });
+            IdClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                patrdesc = false;
+                balancedesc = false;
+                if (!iddesc)
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["id"]).AsDataView();
+                }
+                else
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["id"]).AsDataView();
+                }
+                iddesc = !iddesc;
+            });
             #endregion
 
 

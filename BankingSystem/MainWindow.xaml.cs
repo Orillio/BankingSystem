@@ -37,7 +37,6 @@ namespace BankingSystem
                     .Where(x => x.Field<string>(5) == "VIP").AsDataView();
             }
         }
-
         private void Clients_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (Clients.SelectedIndex == -1) return;

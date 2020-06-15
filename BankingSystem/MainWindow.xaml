@@ -20,6 +20,7 @@
         <Style x:Key="Copy" TargetType="{x:Type ListViewItem}">
             <Setter Property="ContextMenu" Value="{StaticResource Menu}" />
         </Style>
+        <local:SearchConverter x:Key="SearchConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -39,9 +40,9 @@
                 <ListBox x:Name="Deps" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          BorderThickness="0" Height="150" VerticalAlignment="Top" SelectedIndex="{Binding SelectedDep}"
                          SelectionChanged="Deps_SelectionChanged">
-                    <ListBoxItem Height="30" Content="Физические лица" FontSize="16" FontWeight="DemiBold"/>
-                    <ListBoxItem Height="30" Content="Юридические лица" FontSize="16" FontWeight="DemiBold"/>
-                    <ListBoxItem Height="30" Content="VIP клиенты" FontSize="16" FontWeight="DemiBold"/>
+                    <ListBoxItem Tag="Individual" Height="30" Content="Физические лица" FontSize="16" FontWeight="DemiBold"/>
+                    <ListBoxItem Tag="Juridical" Height="30" Content="Юридические лица" FontSize="16" FontWeight="DemiBold"/>
+                    <ListBoxItem Tag="VIP" Height="30" Content="VIP клиенты" FontSize="16" FontWeight="DemiBold"/>
                 </ListBox>
                 <Calendar SelectedDate="{Binding CurrentDate, Mode=OneWayToSource}" VerticalAlignment="Bottom"/>
             </Grid>
@@ -197,27 +198,45 @@
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
+            <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Content}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0" Grid.ColumnSpan="2"/>
             
-            <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Content}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
-            <Button Cursor="Hand" Width="25" Height="25" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0 0 10 0">
+            <Button Command="{Binding Search}" Cursor="Hand" Width="25" Height="26" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,12,10,12" Grid.Column="1">
+                <Button.CommandParameter>
+                    <MultiBinding Converter="{StaticResource SearchConverter}">
+                        <Binding ElementName="Clients"/>
+                        <Binding Path="Text" ElementName="SearchField"/>
+                    </MultiBinding>
+                </Button.CommandParameter>
+
                 <Button.Template>
                     <ControlTemplate>
                         <Image Source="img/glass.png"/>
                     </ControlTemplate>
                 </Button.Template>
             </Button>
-            
-            <TextBox Background="#eee" HorizontalAlignment="Right" VerticalAlignment="Center"
-                     Width="200" Height="30" Margin="0 0 50 0" Padding="5 4 0 0" FontSize="15">
+
+            <TextBox x:Name="SearchField" Background="#eee" HorizontalAlignment="Right" VerticalAlignment="Center"
+                     Width="200" Height="30" Margin="0,10,50,10" Padding="5 4 0 0" FontSize="15" Text="Поиск" Foreground="Gray">
                 <TextBox.Resources>
                     <Style TargetType="Border">
                         <Setter Property="CornerRadius" Value="10"/>
                     </Style>
                 </TextBox.Resources>
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="GotFocus">
+                        <i:InvokeCommandAction CommandParameter="{Binding ElementName=SearchField}" Command="{Binding Path=DataContext.GotSearchFocus,
+                            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="LostFocus">
+                        <i:InvokeCommandAction CommandParameter="{Binding ElementName=SearchField}" Command="{Binding Path=DataContext.LostSearchFocus,
+                            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
             </TextBox>
+
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"
-                      SelectionChanged="Clients_SelectionChanged" ItemContainerStyle="{StaticResource Copy}" SelectionMode="Single">
+                      SelectionChanged="Clients_SelectionChanged" ItemContainerStyle="{StaticResource Copy}" SelectionMode="Single" Grid.ColumnSpan="2">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>
@@ -226,7 +245,8 @@
                                     <TextBlock Text="{Binding id}" TextAlignment="Right"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
-                            <GridViewColumnHeader HorizontalContentAlignment="Center" MinWidth="60" Width="Auto" Command="{Binding IdClick}">ID</GridViewColumnHeader>
+                            <GridViewColumnHeader HorizontalContentAlignment="Center" MinWidth="60" Width="Auto" Command="{Binding IdClick}"
+                                                  CommandParameter="{Binding ElementName=Clients}">ID</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn>
                             <GridViewColumn.CellTemplate>
@@ -239,19 +259,19 @@
                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
-                            <GridViewColumnHeader Command="{Binding NameClick}" Width="140">Имя</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding NameClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Имя</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding clientLastname}">
-                            <GridViewColumnHeader Command="{Binding LastClick}" Width="140">Фамилия</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding LastClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Фамилия</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding clientPatronymic}">
-                            <GridViewColumnHeader Command="{Binding PatrClick}" Width="140">Отчество</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding PatrClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Отчество</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding cardNumber, Converter={x:Static local:CardConverter.Instance}}">
                             <GridViewColumnHeader Width="150">Номер карты</GridViewColumnHeader>
                         </GridViewColumn>
                         <GridViewColumn DisplayMemberBinding="{Binding bankBalance}">
-                            <GridViewColumnHeader Command="{Binding BalanceClick}" Width="140">Баланс</GridViewColumnHeader>
+                            <GridViewColumnHeader Command="{Binding BalanceClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Баланс</GridViewColumnHeader>
                         </GridViewColumn>
                     </GridView>
                 </ListView.View>

@@ -20,8 +20,8 @@
         <TextBlock Text="Тип клиента" FontSize="16" TextAlignment="Center" Margin="0 0 0 5"/>
         <ComboBox SelectedItem="{Binding EditSelectedClientType, Mode=OneWayToSource}" Width="180" FontSize="16">
             <ComboBoxItem Tag="VIP" Content="VIP Клиент" FontSize="16"/>
-            <ComboBoxItem Tag="Indiv" Content="Физическое лицо" FontSize="16"/>
-            <ComboBoxItem Tag="Jurid" Content="Юридическое лицо" FontSize="16"/>
+            <ComboBoxItem Tag="Individual" Content="Физическое лицо" FontSize="16"/>
+            <ComboBoxItem Tag="Juridical" Content="Юридическое лицо" FontSize="16"/>
         </ComboBox>
         <Button Margin="20" Width="180" FontSize="16" Content="Изменить" Command="{Binding EditClientButtonWindow}"/>
     </StackPanel>

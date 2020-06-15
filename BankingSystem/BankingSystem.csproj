@@ -92,13 +92,14 @@
     <Compile Include="EditClientWindow.xaml.cs">
       <DependentUpon>EditClientWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ExtensionMethods\Extensions.cs" />
     <Compile Include="InvestCreateWindow.xaml.cs">
       <DependentUpon>InvestCreateWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ExtensionMethods\ExtensionMethods.cs" />
     <Compile Include="LoadingScreen.xaml.cs">
       <DependentUpon>LoadingScreen.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converter\SearchConverter.cs" />
     <Compile Include="TransactionInfoWindow.xaml.cs">
       <DependentUpon>TransactionInfoWindow.xaml</DependentUpon>
     </Compile>
