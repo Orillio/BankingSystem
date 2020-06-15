@@ -373,70 +373,64 @@ namespace BankingSystem
                 var client = (DataRowView)e;
                 Clipboard.SetText(client.Row["cardNumber"].ToString());
             });
-            //DepositButton = new Command(() =>
-            //{
-            //    if (SelectedClient == null) return;
-            //    Deposit = new DepositWindow();
-            //    Deposit.DataContext = this;
-            //    Deposit.Closed += (sender, e) => { this.Deposit = null; };
-            //    Deposit.ShowDialog();
-            //}); // открытие окна пополнения счета
-            //DepositButtonWindow = new Command(() =>
-            //{
-            //    if (string.IsNullOrEmpty(Deposit.DepositField.Text)) { MessageBox.Show("Поле пустое"); return; }
-            //    if (!long.TryParse(Deposit.DepositField.Text, out long result)) { MessageBox.Show("В поле ввода строка или число слишком большое"); return; }
-            //    try
-            //    {
-            //        if (result > 10000) throw new DepositException("Нельзя пополнить счет на сумму более 10000$ за раз");
-            //    }
-            //    catch (DepositException e)
-            //    {
-            //        MessageBox.Show(e.Message);
-            //        return;
-            //    }
-            //    SelectedClient.BankBalance += result;
-            //    Deposit.Close();
-            //    this.JsonSerializer();
-            //}); // пополнение счета 
-            //AddClientButton = new Command(() =>
-            //{
-            //    AddClient = new AddClientWindow();
-            //    AddClient.DataContext = this;
-            //    AddClient.ShowDialog();
+            DepositButton = new Command(() =>
+            {
+                if (SelectedClient == null) return;
+                Deposit = new DepositWindow();
+                Deposit.DataContext = this;
+                Deposit.Closed += (sender, e) => { this.Deposit = null; };
+                Deposit.ShowDialog();
+            }); // открытие окна пополнения счета
+            DepositButtonWindow = new Command(() =>
+            {
+                if (string.IsNullOrEmpty(Deposit.DepositField.Text)) { MessageBox.Show("Поле пустое"); return; }
+                if (!long.TryParse(Deposit.DepositField.Text, out long result)) { MessageBox.Show("В поле ввода строка или число слишком большое"); return; }
+                if (result > 10000)
+                {
+                    MessageBox.Show("Нельзя пополнить счет на сумму более 10000$ за раз", "Ошибка", MessageBoxButton.OK);
+                    return;
+                }
+                
+                SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] + result;
+                Deposit.Close();
+                Clients.Update();
+            }); // пополнение счета 
+            AddClientButton = new Command(() =>
+            {
+                AddClient = new AddClientWindow();
+                AddClient.DataContext = this;
+                AddClient.ShowDialog();
 
-            //}); // открытие окна добавления клиента
-            //AddClientButtonWindow = new Command(() =>
-            //{
-            //    if (string.IsNullOrEmpty(AddClient.Name.Text) || string.IsNullOrEmpty(AddClient.Lastname.Text) || string.IsNullOrEmpty(AddClient.Patromymic.Text)
-            //        || string.IsNullOrEmpty(AddClient.Age.Text) || AddClient.Name.Text.Trim(' ') == "" || AddClient.Lastname.Text.Trim(' ') == "" ||
-            //            AddClient.Patromymic.Text.Trim(' ') == "" || AddClient.Age.Text.Trim(' ') == "") { MessageBox.Show("Одно или несколько полей не введены"); return; }
+            }); // открытие окна добавления клиента
+            AddClientButtonWindow = new Command(() =>
+            {
+                if (string.IsNullOrEmpty(AddClient.Name.Text) || string.IsNullOrEmpty(AddClient.Lastname.Text) || string.IsNullOrEmpty(AddClient.Patromymic.Text)
+                    || string.IsNullOrEmpty(AddClient.Age.Text) || AddClient.Name.Text.Trim(' ') == "" || AddClient.Lastname.Text.Trim(' ') == "" ||
+                        AddClient.Patromymic.Text.Trim(' ') == "" || AddClient.Age.Text.Trim(' ') == "") { MessageBox.Show("Одно или несколько полей не введены"); return; }
 
-            //    if (!int.TryParse(AddClient.Age.Text, out int res)) { MessageBox.Show("Введен неправильный возраст"); return; }
-            //    if (res > 200) { MessageBox.Show("Введен невозможный для человека возраст"); return; }
-            //    if (SelectedClientType == null) { MessageBox.Show("Вы не выбрали тип клиента"); return; }
-            //    AbstractClient newClient = null;
-            //    if (SelectedClientType.Tag.Equals("VIP"))
-            //    {
-            //        newClient = new VIPClient(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text))
-            //        { CardNumber = long.Parse(CardRandom(VipRandom)) };
-            //        newClient.AddTo(DepItems[2] as Department<VIPClient>);
-            //    }
-            //    else if (SelectedClientType.Tag.Equals("Indiv"))
-            //    {
-            //        newClient = new Individual(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Name.Text, ClientType.VIP, int.Parse(AddClient.Age.Text))
-            //        { CardNumber = long.Parse(CardRandom(IndRandom)) };
-            //        newClient.AddTo(DepItems[1] as Department<Individual>);
-            //    }
-            //    else
-            //    {
-            //        newClient = new Juridical(AddClient.Name.Text, AddClient.Lastname.Text, AddClient.Patromymic.Text, ClientType.VIP, int.Parse(AddClient.Age.Text))
-            //        { CardNumber = long.Parse(CardRandom(JurRandom)) };
-            //        newClient.AddTo(DepItems[0] as Department<Juridical>);
-            //    }
-            //    AddClient.Close();
-            //    this.JsonSerializer();
+                if (!int.TryParse(AddClient.Age.Text, out int res)) { MessageBox.Show("Введен неправильный возраст"); return; }
+                if (res > 200) { MessageBox.Show("Введен невозможный для человека возраст"); return; }
+                if (SelectedClientType == null) { MessageBox.Show("Вы не выбрали тип клиента"); return; }
+                DataRow newClient = Clients.Table.NewRow();
+                if (SelectedClientType.Tag.Equals("VIP"))
+                {
+                    newClient[1] = AddClient.Name.Text;
+                    newClient[2] = AddClient.Lastname.Text;
+                    newClient[3] = AddClient.Patromymic.Text;
+                    newClient[4] = AddClient.Age.Text;
+                    newClient[5] = "VIP";   
+                    newClient[6] = CardRandom(Random);
+                    newClient[7] = 0;
+                }
+                else if (SelectedClientType.Tag.Equals("Indiv"))
+                {
+                }
+                else
+                {
+                }
+                AddClient.Close();
 
-            //}); // добавление клиента
+            }); // добавление клиента
             //EditClientButton = new Command(() =>
             //{
             //    if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }

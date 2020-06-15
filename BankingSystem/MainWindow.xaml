@@ -6,9 +6,9 @@
         xmlns:local="clr-namespace:BankingSystem"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         mc:Ignorable="d"
-        Title="Bank" Height="600" Width="900"
-        MinHeight="600" MinWidth="900"
-        MaxHeight="600" MaxWidth="900"
+        Title="Bank" Height="600" Width="1000"
+        MinHeight="600" MinWidth="1000"
+        MaxHeight="600" MaxWidth="1000"
         Icon="img/bank.png">
     <Window.Resources>
         <ContextMenu x:Key="Menu">
@@ -197,13 +197,37 @@
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Content}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
             
+            <TextBlock Text="{Binding ElementName=Deps, Path=SelectedItem.Content}" FontSize="17" FontWeight="Bold" Padding="10 13 0 0"/>
+            <Button Cursor="Hand" Width="25" Height="25" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0 0 10 0">
+                <Button.Template>
+                    <ControlTemplate>
+                        <Image Source="img/glass.png"/>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+            
+            <TextBox Background="#eee" HorizontalAlignment="Right" VerticalAlignment="Center"
+                     Width="200" Height="30" Margin="0 0 50 0" Padding="5 4 0 0" FontSize="15">
+                <TextBox.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </TextBox.Resources>
+            </TextBox>
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"
                       SelectionChanged="Clients_SelectionChanged" ItemContainerStyle="{StaticResource Copy}" SelectionMode="Single">
                 <ListView.View>
                     <GridView>
+                        <GridViewColumn>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding id}" TextAlignment="Right"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                            <GridViewColumnHeader HorizontalContentAlignment="Center" MinWidth="60" Width="Auto" Command="{Binding IdClick}">ID</GridViewColumnHeader>
+                        </GridViewColumn>
                         <GridViewColumn>
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
