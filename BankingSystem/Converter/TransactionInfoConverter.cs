@@ -7,7 +7,6 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
-using TransactionLib;
 using static EnumsLib.Enums;
 
 namespace BankingSystem
