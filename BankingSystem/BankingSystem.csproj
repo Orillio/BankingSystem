@@ -80,12 +80,10 @@
       <DependentUpon>ClientInfoWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="DataBase\ClientsDataBase.cs" />
-    <Compile Include="Converter\InvestmentPropertiesConverter.cs" />
     <Compile Include="Converter\TransactionInfoConverter.cs" />
     <Compile Include="DataBase\IDataBase.cs" />
     <Compile Include="DataBase\InvestmentsDataBase.cs" />
     <Compile Include="DataBase\TransactionsDataBase.cs" />
-    <Compile Include="Departments\Department.cs" />
     <Compile Include="DepositWindow.xaml.cs">
       <DependentUpon>DepositWindow.xaml</DependentUpon>
     </Compile>
@@ -107,7 +105,6 @@
       <DependentUpon>TransferWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\Bank.cs" />
-    <Compile Include="Clients\VIPClient.cs" />
     <Page Include="AddClientWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -136,13 +133,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="Clients\AbstractClient.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Clients\Individual.cs" />
-    <Compile Include="Clients\Juridical.cs" />
     <Compile Include="Converter\CardConverter.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
@@ -204,10 +198,6 @@
     <Resource Include="img\edit.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClientClassesLib\ClientClassesLib.csproj">
-      <Project>{b32fbfd3-b73a-4bf0-bf33-fe3d66b1b4e6}</Project>
-      <Name>ClientClassesLib</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ComandLib\ComandLib.csproj">
       <Project>{c0f68302-732b-49fe-bb27-7832b6b3613f}</Project>
       <Name>ComandLib</Name>
