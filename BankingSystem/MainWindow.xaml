@@ -21,6 +21,7 @@
             <Setter Property="ContextMenu" Value="{StaticResource Menu}" />
         </Style>
         <local:SearchConverter x:Key="SearchConverter"/>
+        <local:CheckingAccountConverter x:Key="AccConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -267,11 +268,11 @@
                         <GridViewColumn DisplayMemberBinding="{Binding clientPatronymic}">
                             <GridViewColumnHeader Command="{Binding PatrClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Отчество</GridViewColumnHeader>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding cardNumber, Converter={x:Static local:CardConverter.Instance}}">
+                        <GridViewColumn x:Name="Account" DisplayMemberBinding="{Binding cardNumber, Converter={x:Static local:CardConverter.Instance}}">
                             <GridViewColumnHeader Width="150">Номер карты</GridViewColumnHeader>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding bankBalance}">
-                            <GridViewColumnHeader Command="{Binding BalanceClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Баланс</GridViewColumnHeader>
+                        <GridViewColumn x:Name="test1" DisplayMemberBinding="{Binding bankBalance}">
+                            <GridViewColumnHeader x:Name="test" Command="{Binding BalanceClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Баланс</GridViewColumnHeader>
                         </GridViewColumn>
                     </GridView>
                 </ListView.View>

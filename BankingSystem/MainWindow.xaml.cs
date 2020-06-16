@@ -17,6 +17,13 @@ namespace BankingSystem
             InitializeComponent();
             DataContext = new Bank();
         }
+        // ToDo
+        // 1) Сделать 3 View для ListView 
+        // под разные типы клиентов с привязками (по возможности MVVM)
+        // 2) Сделать новые данные под клиентов для расчетных счетов и огрнип 
+        //
+
+
 
         private void Deps_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {

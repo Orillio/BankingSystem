@@ -26,7 +26,9 @@ CREATE TABLE [dbo].[Clients] (
     [clientPatronymic] NVARCHAR (20) NOT NULL,
     [clientAge]        INT           NOT NULL,
     [clientType]       NVARCHAR (20) NOT NULL,
-    [cardNumber]       BIGINT        NOT NULL,
-    [bankBalance]      INT           NOT NULL
+    [cardNumber]       BIGINT        NULL,
+    [bankBalance]      INT           NULL, 
+    [checnkingAccount] BIGINT        NULL, 
+    [accountBalance]   INT           NULL
 );
 

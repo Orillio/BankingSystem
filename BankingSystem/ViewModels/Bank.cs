@@ -321,7 +321,7 @@ namespace BankingSystem
                 if (!CheckCardNumber(result, out DataRow targetClient)) { MessageBox.Show("Такой карты не существует"); return; }
                 if (!long.TryParse(Transfer.TransferSum.Text, out long sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
                 if ((int)SelectedClient["bankBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства: {SelectedClient["bankBalance"]}$"); return; }
-
+                if (targetClient == SelectedClient.Row) { MessageBox.Show("Нельзя перевести средства себе"); return; }
                 #endregion
                 MessageBoxResult res;
                 long newsum = 0;
@@ -335,7 +335,7 @@ namespace BankingSystem
                         targetClient["bankBalance"] = (int)targetClient["bankBalance"] + newsum;
                         break;
                     case "Individual":
-                        newsum = sum + (sum / 100 * 3);
+                        newsum = (long)Math.Round(sum * 1.03);
                         if ((int)SelectedClient["bankBalance"] < newsum)
                         {
                             MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 3%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
@@ -347,7 +347,7 @@ namespace BankingSystem
                         targetClient["bankBalance"] = (int)targetClient["bankBalance"] + sum;
                         break;
                     case "Juridical":
-                        newsum = sum + (sum / 100 * 2);
+                        newsum = (long)Math.Round(sum * 1.02);
                         if ((int)SelectedClient["bankBalance"] < newsum)
                         {
                             MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 2%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
