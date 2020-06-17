@@ -15,14 +15,6 @@ namespace BankingSystem
     /// </summary>
     public partial class MainWindow : Window
     {
-        // ToDo
-        // 1) Сделать 3 View для ListView 
-        // под разные типы клиентов с привязками (по возможности MVVM)
-        // 2) Сделать новые данные под клиентов для расчетных счетов и огрнип 
-        //
-        GridView IndividualView;
-        GridView JuridicalView;
-        GridView VipView;
         public MainWindow()
         {
             InitializeComponent();
