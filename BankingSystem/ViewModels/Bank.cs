@@ -117,15 +117,10 @@ namespace BankingSystem
         {
             get
             {
-                try
-                {
-                    return Investments.Table.DefaultView[Investments.Table.Rows.IndexOf(Investments.Table.AsEnumerable()
-                                .First(x => x.Field<int>("clientId") == (int)SelectedClient[0]))];
-                }
-                catch
-                {
-                    return null;
-                }
+                var a = Investments.Table.Rows.IndexOf(Investments.Table.AsEnumerable()
+                        .FirstOrDefault(x => x.Field<int>("clientId") == (int)SelectedClient[0]));
+                if (a == -1) return null;
+                return Investments.Table.DefaultView[a];
             }
         }
         #endregion
@@ -193,7 +188,7 @@ namespace BankingSystem
             Transactions = new TransactionsDataBase(selectTrans, insertTrans, updateTrans, deleteTrans);
             #endregion
 
-            FillClients(2000);
+            FillClients(10);
 
             #region Команды
 
@@ -321,7 +316,7 @@ namespace BankingSystem
                 if (!CheckCardNumber(result, out DataRow targetClient)) { MessageBox.Show("Такой карты не существует"); return; }
                 if (!long.TryParse(Transfer.TransferSum.Text, out long sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
                 if ((int)SelectedClient["bankBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства: {SelectedClient["bankBalance"]}$"); return; }
-
+                if (targetClient == SelectedClient.Row) { MessageBox.Show("Нельзя перевести средства себе"); return; }
                 #endregion
                 MessageBoxResult res;
                 long newsum = 0;
@@ -335,7 +330,7 @@ namespace BankingSystem
                         targetClient["bankBalance"] = (int)targetClient["bankBalance"] + newsum;
                         break;
                     case "Individual":
-                        newsum = sum + (sum / 100 * 3);
+                        newsum = (long)Math.Round(sum * 1.03);
                         if ((int)SelectedClient["bankBalance"] < newsum)
                         {
                             MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 3%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
@@ -347,7 +342,7 @@ namespace BankingSystem
                         targetClient["bankBalance"] = (int)targetClient["bankBalance"] + sum;
                         break;
                     case "Juridical":
-                        newsum = sum + (sum / 100 * 2);
+                        newsum = (long)Math.Round(sum * 1.02);
                         if ((int)SelectedClient["bankBalance"] < newsum)
                         {
                             MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 2%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
@@ -497,6 +492,10 @@ namespace BankingSystem
             {
                 if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }
                 EditClient = new EditClientWindow();
+                if ((string)SelectedClient.Row["clientType"] == "Juridical")
+                {
+                    EditClient.Type.IsEnabled = false;
+                }
                 EditClient.DataContext = this;
                 EditClient.ShowDialog();
             }); // открытие окна изменения клиента
@@ -527,9 +526,7 @@ namespace BankingSystem
                 if (SelectedClient == null) { MessageBox.Show("Клиент не выбран"); return; }
                 var res = MessageBox.Show("Вы уверены, что хотите удалить клиента?", "", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (res == MessageBoxResult.No) return;
-                SelectedClient.Row.Delete();
-                Clients.Table.AcceptChanges();
-
+                Clients.Table.Rows[Clients.Table.Rows.IndexOf(SelectedClient.Row)].Delete();
                 Clients.Update();
             });
             NameClick = new Command(e =>
@@ -815,16 +812,12 @@ namespace BankingSystem
         #region Проверки
         private bool CheckCardNumber(long cardnumber, out DataRow client)
         {
-            try
+            client = Clients.Table.AsEnumerable().FirstOrDefault(x => (long)x["cardNumber"] == cardnumber);
+            if (client == default)
             {
-                client = Clients.Table.AsEnumerable().First(x => (long)x["cardNumber"] == cardnumber);
-                return true;
-            }
-            catch
-            {
-                client = null;
                 return false;
             }
+            return true;
 
         } // проверка на существование клиента, и возвращение его
 
