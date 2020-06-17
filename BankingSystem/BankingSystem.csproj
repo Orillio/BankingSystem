@@ -79,7 +79,6 @@
     <Compile Include="ClientInfoWindow.xaml.cs">
       <DependentUpon>ClientInfoWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Converter\CheckingAccountConverter.cs" />
     <Compile Include="DataBase\ClientsDataBase.cs" />
     <Compile Include="Converter\TransactionInfoConverter.cs" />
     <Compile Include="DataBase\IDataBase.cs" />

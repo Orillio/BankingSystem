@@ -50,6 +50,8 @@ namespace BankingSystem
             Adapter.InsertCommand.Parameters.Add("@clientType", SqlDbType.NVarChar, 20, "clientType");
             Adapter.InsertCommand.Parameters.Add("@cardNumber", SqlDbType.BigInt, 4, "cardNumber");
             Adapter.InsertCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
+            Adapter.InsertCommand.Parameters.Add("@checkingAccount", SqlDbType.NVarChar, 20, "checkingAccount");
+            Adapter.InsertCommand.Parameters.Add("@accountBalance", SqlDbType.Int, 4, "accountBalance");
 
             #endregion
 
@@ -65,6 +67,8 @@ namespace BankingSystem
             Adapter.UpdateCommand.Parameters.Add("@clientType", SqlDbType.NVarChar, 20, "clientType");
             Adapter.UpdateCommand.Parameters.Add("@cardNumber", SqlDbType.BigInt, 4, "cardNumber");
             Adapter.UpdateCommand.Parameters.Add("@bankBalance", SqlDbType.Int, 4, "bankBalance");
+            Adapter.UpdateCommand.Parameters.Add("@checkingAccount", SqlDbType.NVarChar, 20, "checkingAccount");
+            Adapter.UpdateCommand.Parameters.Add("@accountBalance", SqlDbType.Int, 4, "accountBalance");
             #endregion
 
             #region DELETE Command

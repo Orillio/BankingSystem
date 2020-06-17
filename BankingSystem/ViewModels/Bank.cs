@@ -135,16 +135,18 @@ namespace BankingSystem
             var select = @"SELECT * FROM Clients Order By Clients.id ";
             var delete = @"DELETE FROM Clients WHERE id = @id";
             var insert = @"INSERT INTO Clients (clientName, clientLastname, clientPatronymic,
-                                                clientAge, cardNumber, bankBalance, clientType)
+                                                clientAge, cardNumber, bankBalance, clientType, checkingAccount, accountBalance)
                                         VALUES (@clientName, @clientLastname, @clientPatronymic,
-                                                @clientAge, @cardNumber, @bankBalance, @clientType)
+                                                @clientAge, @cardNumber, @bankBalance, @clientType, @checkingAccount, @accountBalance)
                                         SET @id = @@IDENTITY";
             var updateVip = @"UPDATE Clients SET clientName = @clientName, clientLastname = @clientLastname,
                                               clientPatronymic = @clientPatronymic,
                                               clientAge = @clientAge,
                                               cardNumber = @cardNumber,
                                               bankBalance = @bankBalance,
-                                              clientType = @clientType
+                                              clientType = @clientType,
+                                              checkingAccount = @checkingAccount
+                                              accountBalance = @accountBalance
                           WHERE id = @id";
             #endregion
 
@@ -802,9 +804,38 @@ namespace BankingSystem
                 data[4] = Random.Next(18, 31);
                 data[5] = Random.Next(1, 4) == 1 ? "Juridical" : Random.Next(1, 4) == 2
                     ? "Individual" : "VIP";
-                data[6] = long.Parse(CardRandom(Random));
-                data[7] = Random.Next(10, 200000);
+                if ((string)data[5] == "Juridical")
+                {
+                    data["checkingAccount"] = RandomCheckingAccount();
+                }
+                else
+                {
+                    data[6] = long.Parse(CardRandom(Random));
+                    data[7] = Random.Next(10, 200000);
+                }
                 db.Table.Rows.Add(data);
+            }
+        }
+
+        private string RandomCheckingAccount()
+        {
+            string basestring = "40817810099";
+            var checkaccount = basestring + Random.Next(100000000, 999999999).ToString();
+
+            while (AccExists(checkaccount))
+            {
+                checkaccount = basestring + Random.Next(1000000, 9999999).ToString();
+            }
+            return checkaccount;
+
+            bool AccExists(string account)
+            {
+                foreach (var acc in Clients.Table.Rows)
+                {
+                    if ((acc as DataRow)["checkingAccount"] != null)
+                        if ((acc as DataRow)["checkingAccount"].ToString().Equals(account)) return true;
+                }
+                return false;
             }
         }
         #endregion

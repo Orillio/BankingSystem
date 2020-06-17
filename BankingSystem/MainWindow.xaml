@@ -5,24 +5,56 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BankingSystem"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="Bank" Height="600" Width="1000"
         MinHeight="600" MinWidth="1000"
         MaxHeight="600" MaxWidth="1000"
         Icon="img/bank.png">
     <Window.Resources>
+        
+        <!--#region GridView templates-->
+        <GridViewColumn x:Key="TransactionTemplate">
+            <GridViewColumn.CellTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Background="Wheat" FontWeight="Bold" FontSize="16" Width="20" Content="!" Command="{Binding RelativeSource=
+                                            {RelativeSource AncestorType=Window, Mode=FindAncestor}, Path=DataContext.TransferInfo}" CommandParameter="{Binding RelativeSource=
+                                            {RelativeSource Mode=Self}, Path=DataContext}"/>
+                        <TextBlock TextAlignment="Center" Padding="4" Text="{Binding clientName}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </GridViewColumn.CellTemplate>
+            <GridViewColumnHeader Command="{Binding NameClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Имя</GridViewColumnHeader>
+        </GridViewColumn>
+        
+        <GridViewColumn x:Key="TransactionTemplateJurid">
+            <GridViewColumn.CellTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Background="Wheat" FontWeight="Bold" FontSize="16" Width="20" Content="!" Command="{Binding RelativeSource=
+                                            {RelativeSource AncestorType=Window, Mode=FindAncestor}, Path=DataContext.TransferInfo}" CommandParameter="{Binding RelativeSource=
+                                            {RelativeSource Mode=Self}, Path=DataContext}"/>
+                        <TextBlock TextAlignment="Center" Padding="4" Text="{Binding clientName}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </GridViewColumn.CellTemplate>
+            <GridViewColumnHeader Command="{Binding NameClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Имя</GridViewColumnHeader>
+        </GridViewColumn>
+        <!--#endregion-->
+        
         <ContextMenu x:Key="Menu">
             <ContextMenu.Items>
                 <MenuItem Header="Скопировать номер карты" Command="{Binding DataContext.CopyCardNumber, RelativeSource={RelativeSource AncestorType=Window}}"
                           CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Mode=Self}}"/>
             </ContextMenu.Items>
         </ContextMenu>
+        
         <Style x:Key="Copy" TargetType="{x:Type ListViewItem}">
             <Setter Property="ContextMenu" Value="{StaticResource Menu}" />
         </Style>
+        
         <local:SearchConverter x:Key="SearchConverter"/>
-        <local:CheckingAccountConverter x:Key="AccConverter"/>
+        
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -220,9 +252,6 @@
 
             <TextBox x:Name="SearchField" Background="#eee" HorizontalAlignment="Right" VerticalAlignment="Center"
                      Width="200" Height="30" Margin="0,10,50,10" Padding="5 4 0 0" FontSize="15" Foreground="Gray">
-                <TextBox.Text>
-                    <sys:String>Поиск</sys:String>
-                </TextBox.Text>
                 <TextBox.Resources>
                     <Style TargetType="Border">
                         <Setter Property="CornerRadius" Value="10"/>
@@ -243,12 +272,12 @@
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"
                       SelectionChanged="Clients_SelectionChanged" ItemContainerStyle="{StaticResource Copy}" SelectionMode="Single" Grid.ColumnSpan="2">
-                <!--<ListView.View>
+                <ListView.View>
                     <GridView>
                         <GridViewColumn>
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding id}" TextAlignment="Right"/>
+                                        <TextBlock Text="{Binding id}" TextAlignment="Right"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                             <GridViewColumnHeader HorizontalContentAlignment="Center" MinWidth="60" Width="Auto" Command="{Binding IdClick}"
@@ -280,7 +309,7 @@
                             <GridViewColumnHeader x:Name="test" Command="{Binding BalanceClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Баланс</GridViewColumnHeader>
                         </GridViewColumn>
                     </GridView>
-                </ListView.View>-->
+                </ListView.View>
             </ListView>
 
         </Grid>
