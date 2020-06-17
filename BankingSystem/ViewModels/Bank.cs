@@ -497,6 +497,10 @@ namespace BankingSystem
             {
                 if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }
                 EditClient = new EditClientWindow();
+                if ((string)SelectedClient.Row["clientType"] == "Juridical")
+                {
+                    EditClient.Type.IsEnabled = false;
+                }
                 EditClient.DataContext = this;
                 EditClient.ShowDialog();
             }); // открытие окна изменения клиента
