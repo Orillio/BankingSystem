@@ -76,8 +76,26 @@ namespace BankingSystem
             IndividualAndVipView = new GridView();
             JuridicalView = new GridView();
 
+            #region Парсинг темплейта
+            var template = @"<GridViewColumn x:Key=""TransactionTemplate"">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation=""Horizontal"">
+                            <Button Background=""Wheat"" FontWeight=""Bold"" FontSize=""16"" Width=""20"" Content=""!"" Command=""{Binding RelativeSource=
+                                                {RelativeSource AncestorType=Window, Mode=FindAncestor}, Path=DataContext.TransferInfo}"" CommandParameter=""{Binding RelativeSource=
+                                                {RelativeSource Mode=Self}, Path=DataContext}""/>
+                            <TextBlock TextAlignment=""Center"" Padding=""4"" Text=""{Binding clientName}""/>
+                        </StackPanel>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+                <GridViewColumnHeader Command=""{Binding NameClick}"" CommandParameter=""{Binding ElementName=Clients}"" Width=""140"">Имя</GridViewColumnHeader>
+            </GridViewColumn>";
+
+            #endregion
+
             #region Individual and VIP поля
             {
+
                 GridViewColumn id = new GridViewColumn();
                 id.Width = 60;
                 var idheader = new GridViewColumnHeader();
@@ -86,6 +104,11 @@ namespace BankingSystem
                 idheader.Content = "id";
                 id.Header = idheader;
                 id.DisplayMemberBinding = new Binding("id");
+
+                ParserContext context = new ParserContext();
+                context.XmlnsDictionary.Add("", "http://schemas.microsoft.com/winfx/2006/xaml/presentation");
+                context.XmlnsDictionary.Add("x", "http://schemas.microsoft.com/winfx/2006/xaml");
+                GridViewColumn namecolumn = (GridViewColumn)XamlReader.Parse(template, context);
 
                 GridViewColumn lastname = new GridViewColumn();
                 lastname.Width = 110;
@@ -121,7 +144,7 @@ namespace BankingSystem
                 balance.DisplayMemberBinding = new Binding("bankBalance");
 
                 IndividualAndVipView.Columns.Add(id);
-                IndividualAndVipView.Columns.Add((GridViewColumn)this.Resources["TransactionTemplate"]);
+                IndividualAndVipView.Columns.Add(namecolumn);
                 IndividualAndVipView.Columns.Add(lastname);
                 IndividualAndVipView.Columns.Add(patronymic);
                 IndividualAndVipView.Columns.Add(card);
@@ -141,6 +164,11 @@ namespace BankingSystem
                 idheader.Content = "id";
                 id.Header = idheader;
                 id.DisplayMemberBinding = new Binding("id");
+
+                ParserContext context = new ParserContext();
+                context.XmlnsDictionary.Add("", "http://schemas.microsoft.com/winfx/2006/xaml/presentation");
+                context.XmlnsDictionary.Add("x", "http://schemas.microsoft.com/winfx/2006/xaml");
+                GridViewColumn namecolumn = (GridViewColumn)XamlReader.Parse(template, context);
 
                 GridViewColumn name = new GridViewColumn();
                 name.Width = 110;
@@ -177,7 +205,7 @@ namespace BankingSystem
                 account.DisplayMemberBinding = new Binding("checkingAccount");
 
                 JuridicalView.Columns.Add(id);
-                JuridicalView.Columns.Add((GridViewColumn)this.Resources["TransactionTemplateJurid"]);
+                JuridicalView.Columns.Add(namecolumn);
                 JuridicalView.Columns.Add(lastname);
                 JuridicalView.Columns.Add(patronymic);
                 JuridicalView.Columns.Add(account);

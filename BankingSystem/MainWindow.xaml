@@ -16,7 +16,6 @@
         <GridViewColumn x:Key="TransactionTemplate">
             <GridViewColumn.CellTemplate>
                 <DataTemplate>
-                    
                     <StackPanel Orientation="Horizontal">
                         <Button Background="Wheat" FontWeight="Bold" FontSize="16" Width="20" Content="!" Command="{Binding RelativeSource=
                                             {RelativeSource AncestorType=Window, Mode=FindAncestor}, Path=DataContext.TransferInfo}" CommandParameter="{Binding RelativeSource=
