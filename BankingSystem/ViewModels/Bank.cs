@@ -145,7 +145,7 @@ namespace BankingSystem
                                               cardNumber = @cardNumber,
                                               bankBalance = @bankBalance,
                                               clientType = @clientType,
-                                              checkingAccount = @checkingAccount
+                                              checkingAccount = @checkingAccount,
                                               accountBalance = @accountBalance
                           WHERE id = @id";
             #endregion
@@ -230,28 +230,28 @@ namespace BankingSystem
                     Investments.Update();
                     return;
                 }
-                try
+                DateTime.TryParse((string)GetInvestmentFromClient.Row["investmentDate"], out var date);
+
+                var days = (CurrentDate - date).Days;
+                if (days < 0) { MessageBox.Show($"Вклада еще не существовало. Дата вклада: {GetInvestmentFromClient.Row["investmentDate"]}"); return; }
+                Info = new ClientInfoWindow
                 {
-                    Info = new ClientInfoWindow
-                    {
-                        DataContext = GetInvestmentFromClient
-                    };
-                    Info.OnWithdraw += (e) =>
-                    {
-                        SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] + e;
-                        GetInvestmentFromClient.Row.Delete();
+                    DataContext = GetInvestmentFromClient
+                };
+                Info.OnWithdraw += (e) =>
+                {
+                    SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] + e;
+                    GetInvestmentFromClient.Row.Delete();
 
-                        Investments.Update();
-                        Clients.Update();
-                        Info.Close();
-                    };
+                    Investments.Update();
+                    Clients.Update();
+                    Info.Close();
+                };
 
-                    Info.Closed += (sender, e) => { this.Info = null; };
-                    Info.WithDraw.DataContext = this;
-                    Info.CurrentDate.DataContext = CurrentDate.ToShortDateString();
-                    Info.ShowDialog();
-                }
-                catch (Exception ex) { MessageBox.Show(ex.Message); }
+                Info.Closed += (sender, e) => { this.Info = null; };
+                Info.WithDraw.DataContext = this;
+                Info.CurrentDate.DataContext = CurrentDate.ToShortDateString();
+                Info.ShowDialog();
 
             });
             InvestmentButton = new Command(() =>
@@ -843,7 +843,8 @@ namespace BankingSystem
         #region Проверки
         private bool CheckCardNumber(long cardnumber, out DataRow client)
         {
-            client = Clients.Table.AsEnumerable().FirstOrDefault(x => (long)x["cardNumber"] == cardnumber);
+            client = Clients.Table.AsEnumerable().FirstOrDefault(x => long.TryParse(x["cardNumber"].ToString(), out long num) && num == cardnumber);
+
             if (client == default)
             {
                 return false;

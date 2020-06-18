@@ -31,31 +31,37 @@ namespace BankingSystem
             DepositField.Text = "";
             if (Deps.SelectedIndex == 0)
             {
+                CardNumberFields.Visibility = Visibility.Visible;
+                CheckAccountFields.Visibility = Visibility.Collapsed;
                 Clients.View = IndividualAndVipView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "Individual").AsDataView();
             }
             else if (Deps.SelectedIndex == 1)
             {
-
+                CardNumberFields.Visibility = Visibility.Collapsed;
+                CheckAccountFields.Visibility = Visibility.Visible;
                 Clients.View = JuridicalView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "Juridical").AsDataView();
             }
             else
             {
+                CardNumberFields.Visibility = Visibility.Visible;
+                CheckAccountFields.Visibility = Visibility.Collapsed;
                 Clients.View = IndividualAndVipView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "VIP").AsDataView();
             }
         }
+
         private void Clients_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (Clients.SelectedIndex == -1) return;
-            DataRow client = null;
+            DataRow investment = null;
             if ((DataContext as Bank).GetInvestmentFromClient != null)
             {
-                client = (DataContext as Bank).GetInvestmentFromClient.Row;
+                investment = (DataContext as Bank).GetInvestmentFromClient.Row;
             }
             else
             {
@@ -63,7 +69,7 @@ namespace BankingSystem
                 return;
             }
 
-            DepositField.Text = client.Field<string>(2) == "NotCapitalization"
+            DepositField.Text = investment.Field<string>(2) == "NotCapitalization"
                 ? "Без капитализации"
                 : "С капитализацией";
         }
@@ -75,23 +81,6 @@ namespace BankingSystem
         {
             IndividualAndVipView = new GridView();
             JuridicalView = new GridView();
-
-            #region Парсинг темплейта
-            var template = @"<GridViewColumn x:Key=""TransactionTemplate"">
-                <GridViewColumn.CellTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation=""Horizontal"">
-                            <Button Background=""Wheat"" FontWeight=""Bold"" FontSize=""16"" Width=""20"" Content=""!"" Command=""{Binding RelativeSource=
-                                                {RelativeSource AncestorType=Window, Mode=FindAncestor}, Path=DataContext.TransferInfo}"" CommandParameter=""{Binding RelativeSource=
-                                                {RelativeSource Mode=Self}, Path=DataContext}""/>
-                            <TextBlock TextAlignment=""Center"" Padding=""4"" Text=""{Binding clientName}""/>
-                        </StackPanel>
-                    </DataTemplate>
-                </GridViewColumn.CellTemplate>
-                <GridViewColumnHeader Command=""{Binding NameClick}"" CommandParameter=""{Binding ElementName=Clients}"" Width=""140"">Имя</GridViewColumnHeader>
-            </GridViewColumn>";
-
-            #endregion
 
             #region Individual and VIP поля
             {
@@ -105,10 +94,9 @@ namespace BankingSystem
                 id.Header = idheader;
                 id.DisplayMemberBinding = new Binding("id");
 
-                ParserContext context = new ParserContext();
-                context.XmlnsDictionary.Add("", "http://schemas.microsoft.com/winfx/2006/xaml/presentation");
-                context.XmlnsDictionary.Add("x", "http://schemas.microsoft.com/winfx/2006/xaml");
-                GridViewColumn namecolumn = (GridViewColumn)XamlReader.Parse(template, context);
+                GridViewColumn namecolumn = (GridViewColumn)Application.Current.Resources["TransactionTemplate"];
+                (namecolumn.Header as GridViewColumnHeader).Command = (DataContext as Bank).NameClick;
+                (namecolumn.Header as GridViewColumnHeader).CommandParameter = Clients;
 
                 GridViewColumn lastname = new GridViewColumn();
                 lastname.Width = 110;
@@ -134,7 +122,9 @@ namespace BankingSystem
                 cardheader.Content = "Номер карты";
                 card.Width = 140;
                 card.Header = cardheader;
-                card.DisplayMemberBinding = new Binding("cardNumber");
+                var cardbinding = new Binding("cardNumber");
+                cardbinding.Converter = new CardConverter();
+                card.DisplayMemberBinding = cardbinding;
 
                 GridViewColumn balance = new GridViewColumn();
                 var balanceheader = new GridViewColumnHeader();
@@ -165,10 +155,9 @@ namespace BankingSystem
                 id.Header = idheader;
                 id.DisplayMemberBinding = new Binding("id");
 
-                ParserContext context = new ParserContext();
-                context.XmlnsDictionary.Add("", "http://schemas.microsoft.com/winfx/2006/xaml/presentation");
-                context.XmlnsDictionary.Add("x", "http://schemas.microsoft.com/winfx/2006/xaml");
-                GridViewColumn namecolumn = (GridViewColumn)XamlReader.Parse(template, context);
+                GridViewColumn namecolumn = (GridViewColumn)Application.Current.Resources["TransactionTemplateJurid"];
+                (namecolumn.Header as GridViewColumnHeader).Command = (DataContext as Bank).NameClick;
+                (namecolumn.Header as GridViewColumnHeader).CommandParameter = Clients;
 
                 GridViewColumn name = new GridViewColumn();
                 name.Width = 110;

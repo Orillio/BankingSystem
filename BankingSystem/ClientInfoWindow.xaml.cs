@@ -34,7 +34,6 @@ namespace BankingSystem
             DateTime.TryParse((string)dc.Row["investmentDate"], out var date);
             DateTime.TryParse(curDate.Text, out var currentDate);
             var days = (currentDate - date).Days;
-            if (days < 0) throw new InvalidDateException($"Вклада еще несуществовало. Дата вклада: {dc.Row["investmentDate"]}"); // если дней меньше нуля, то вклада еще не существовало
             switch (dc.Row["investmentType"])
             {
                 case "Capitalization": // в случае, если тип инвестиции - с капитализацией
