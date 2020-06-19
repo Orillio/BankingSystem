@@ -12,11 +12,11 @@
         WindowStartupLocation="CenterScreen">
     <Grid>
        <StackPanel Margin="10" Background="White" Orientation="Vertical" >
-           <TextBlock HorizontalAlignment="Center" Margin="0 15 0 0" Text="Введите номер карты получателя" />
+           <TextBlock x:Name="InputCardnumber" HorizontalAlignment="Center" Margin="0 15 0 0" Text="Введите номер карты получателя" />
             <TextBox x:Name="CardNumber" Height="25" Margin="50 15 50 0" TextAlignment="Center" FontSize="14"/>
             <TextBlock HorizontalAlignment="Center" Margin="0 15 0 0" Text="Введите сумму для перечисления" />
             <TextBox x:Name="TransferSum" Height="25" Margin="50 15 50 0" TextAlignment="Center" FontSize="14"/>
-            <Button Margin="70 15 70 0" Content="Перевести" Command="{Binding TransferButtonWindow}"/>
+            <Button x:Name="TransferButton" Margin="70 15 70 0" Content="Перевести" Command="{Binding TransferButtonWindow}"/>
        </StackPanel>
     </Grid>
 </Window>

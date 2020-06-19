@@ -26,7 +26,7 @@
                         </GridViewColumn.CellTemplate>
                         <GridViewColumnHeader Width="220">Клиент</GridViewColumnHeader>
                     </GridViewColumn>
-                    <GridViewColumn DisplayMemberBinding="{Binding CardTarget, StringFormat=\{0:#### #### #### ####\}}">
+                    <GridViewColumn x:Name="PaymentSource" DisplayMemberBinding="{Binding CardTarget, StringFormat=\{0:#### #### #### ####\}}">
                         <GridViewColumnHeader Width="170">Карта</GridViewColumnHeader>
                     </GridViewColumn>
                     <GridViewColumn>

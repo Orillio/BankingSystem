@@ -79,10 +79,12 @@ namespace BankingSystem
         #endregion
 
         #region Команды
-        public ICommand InvestmentButton { get; set; } 
+        public ICommand InvestmentButton { get; set; }
         public ICommand InfoClick { get; set; }
         public ICommand TransferButton { get; set; }
         public ICommand TransferButtonWindow { get; set; }
+        public ICommand AccountTransferButton { get; set; }
+        public ICommand AccountTransferButtonWindow { get; set; }
         public ICommand DepositButton { get; set; }
         public ICommand DepositButtonWindow { get; set; }
         public ICommand AddClientButton { get; set; }
@@ -93,10 +95,11 @@ namespace BankingSystem
         public ICommand NameClick { get; set; }
         public ICommand LastClick { get; set; }
         public ICommand PatrClick { get; set; }
-        public ICommand BalanceClick { get; set; }
+        public ICommand CardBalanceClick { get; set; }
+        public ICommand AccountBalanceClick { get; set; }
         public ICommand IdClick { get; set; }
         public ICommand TransferInfo { get; set; }
-        public ICommand CopyCardNumber { get; set; }
+        public ICommand CopyCardNumberOrAccount { get; set; }
         public ICommand Search { get; set; }
         public ICommand GotSearchFocus { get; set; }
         public ICommand LostSearchFocus { get; set; }
@@ -107,7 +110,8 @@ namespace BankingSystem
         bool namedesc = false;
         bool lastdesc = false;
         bool patrdesc = false;
-        bool balancedesc = false;
+        bool cardbalancedesc = false;
+        bool accountbalancedesc = false;
         bool iddesc = true;
 
         #endregion
@@ -172,9 +176,9 @@ namespace BankingSystem
             var selectTrans = @"SELECT * FROM Transactions Order By Transactions.Id ";
             var deleteTrans = @"DELETE FROM Transactions WHERE Id = @Id";
             var insertTrans = @"INSERT INTO Transactions (ClientId, NameTarget, LastnameTarget,
-                                                PatronymicTarget, CardTarget, ClientTypeTarget, TransactionSum, Type)
+                                                PatronymicTarget, CardTarget, ClientTypeTarget, TransactionSum, Type, CheckingAccount)
                                         VALUES (@ClientId, @NameTarget, @LastnameTarget,
-                                                @PatronymicTarget, @CardTarget, @ClientTypeTarget, @TransactionSum, @Type)
+                                                @PatronymicTarget, @CardTarget, @ClientTypeTarget, @TransactionSum, @Type, @CheckingAccount)
                                         SET @Id = @@IDENTITY";
             var updateTrans = @"UPDATE Transactions SET ClientId = @ClientId, NameTarget = @NameTarget,
                                               LastnameTarget = @LastnameTarget,
@@ -182,7 +186,8 @@ namespace BankingSystem
                                               CardTarget = @CardTarget,
                                               ClientTypeTarget = @ClientTypeTarget,
                                               TransactionSum = @TransactionSum,
-                                              Type = @Type
+                                              Type = @Type,
+                                              CheckingAccount = @CheckingAccount
                             WHERE Id = @Id";
             #endregion
 
@@ -241,8 +246,16 @@ namespace BankingSystem
                 };
                 Info.OnWithdraw += (e) =>
                 {
-                    SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] + e;
-                    GetInvestmentFromClient.Row.Delete();
+                    if ((string)SelectedClient.Row["clientType"] == "Juridical")
+                    {
+                        SelectedClient.Row["accountBalance"] = (int)SelectedClient.Row["accountBalance"] + e;
+                        GetInvestmentFromClient.Row.Delete();
+                    }
+                    else
+                    {
+                        SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] + e;
+                        GetInvestmentFromClient.Row.Delete();
+                    }
 
                     Investments.Update();
                     Clients.Update();
@@ -259,14 +272,25 @@ namespace BankingSystem
             {
                 #region Обратные условия
                 if (string.IsNullOrEmpty(CreateInvest.InvestField.Text)) { MessageBox.Show("Ничего не введено"); return; }
-
                 if (!int.TryParse(CreateInvest.InvestField.Text, out int result)) { MessageBox.Show("Введена строка или слишком большое число"); return; }
 
-                if ((int)SelectedClient.Row["bankBalance"] < result) { MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
-                    $" {SelectedClient.Row["bankBalance"]}$"); return; }
 
-                if (result < 500) { MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
+                if ((string)SelectedClient.Row["clientType"] == "Juridical")
+                {
+                    if ((int)SelectedClient.Row["accountBalance"] < result) { MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
+                        $" {SelectedClient.Row["accountBalance"]}$"); return; }
+
+                    if (result < 500) { MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
+                    $" {SelectedClient.Row["accountBalance"]}$"); return; }
+                }
+                else
+                {
+                    if ((int)SelectedClient.Row["bankBalance"] < result) { MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
+                        $" {SelectedClient.Row["bankBalance"]}$"); return; }
+
+                    if (result < 500) { MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
                     $" {SelectedClient.Row["bankBalance"]}$"); return; }
+                }
 
                 if (SelectedInvType == null) { MessageBox.Show("Вы не выбрали тип вклада"); return; }
 
@@ -284,7 +308,15 @@ namespace BankingSystem
                                             ? 15
                                             : 11;
                 Investments.Table.Rows.Add(newInvest);
-                SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] - result;
+                if ((string)SelectedClient.Row["clientType"] == "Juridical")
+                {
+                    SelectedClient.Row["accountBalance"] = (int)SelectedClient.Row["accountBalance"] - result;
+                }
+                else
+                {
+                    SelectedClient.Row["bankBalance"] = (int)SelectedClient.Row["bankBalance"] - result;
+                }
+
                 try
                 {
                     Investments.Update();
@@ -301,28 +333,62 @@ namespace BankingSystem
             {
                 if (this.Transfer != null) return;
                 if (SelectedClient == null) return;
-                if ((int)SelectedClient["bankBalance"] < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
+
                 Transfer = new TransferWindow();
+
+                if ((string)SelectedClient["clientType"] == "Juridical")
+                {
+                    if ((int)SelectedClient["accountBalance"] < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 20$"); return; }
+                    Transfer.InputCardnumber.Text = "Введите расчетный счет получателя";
+                }
+                else
+                {
+                    if ((int)SelectedClient["bankBalance"] < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
+                }
                 Transfer.Closed += (sender, e) => { this.Transfer = null; };
                 Transfer.DataContext = this;
                 Transfer.ShowDialog();
             });
             TransferButtonWindow = new Command(() =>
             {
-                var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
-                string card = enumcard.Aggregate<char, string>(null, (current, item) => current + item);
+                string card = Transfer.CardNumber.Text;
+                if ((string)SelectedClient["clientType"] != "Juridical")
+                {
+                    var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
+                    card = enumcard.Aggregate<char, string>(null, (current, item) => current + item);
+                }
 
                 #region Обратные условия
 
                 if (string.IsNullOrEmpty(card)) { MessageBox.Show("Поле пустое"); return; }
-                if (!long.TryParse(card, out long result)) { MessageBox.Show("В поле для ввода карты введена строка или слишком большое число"); return; }
-                if (!CheckCardNumber(result, out DataRow targetClient)) { MessageBox.Show("Такой карты не существует"); return; }
-                if (!long.TryParse(Transfer.TransferSum.Text, out long sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
-                if ((int)SelectedClient["bankBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства: {SelectedClient["bankBalance"]}$"); return; }
+
+                DataRow targetClient = null;
+                long sum = 0;
+
+                if ((string)SelectedClient["clientType"] != "Juridical")
+                {
+                    if (!long.TryParse(card, out long result)) { MessageBox.Show("В поле для ввода карты введена строка или слишком большое число"); return; }
+                    if (!CheckCardNumber(result, out targetClient)) { MessageBox.Show("Такой карты не существует"); return; }
+                    if (!long.TryParse(Transfer.TransferSum.Text, out sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
+                    if ((int)SelectedClient["bankBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства:" +
+                        $" {SelectedClient["bankBalance"]}$"); return; }
+                }
+                else
+                {
+                    if (!CheckAccount(card, out targetClient)) { MessageBox.Show("Такого расчетного счета не существует"); return; }
+                    if (!long.TryParse(Transfer.TransferSum.Text, out sum))
+                    { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
+                    if ((int)SelectedClient["accountBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства:" +
+                        $" {SelectedClient["accountBalance"]}$"); return; }
+                }
+
                 if (targetClient == SelectedClient.Row) { MessageBox.Show("Нельзя перевести средства себе"); return; }
+
                 #endregion
+
                 MessageBoxResult res;
                 long newsum = 0;
+
                 switch ((string)SelectedClient["clientType"])
                 {
                     case "VIP":
@@ -346,19 +412,20 @@ namespace BankingSystem
                         break;
                     case "Juridical":
                         newsum = (long)Math.Round(sum * 1.02);
-                        if ((int)SelectedClient["bankBalance"] < newsum)
+                        if ((int)SelectedClient["accountBalance"] < newsum)
                         {
                             MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 2%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
                             return;
                         }
                         res = MessageBox.Show($"Комиссия перевода - 2%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
                         if (res != MessageBoxResult.Yes) return;
-                        SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] - newsum;
-                        targetClient["bankBalance"] = (int)targetClient["bankBalance"] + sum;
+                        SelectedClient["accountBalance"] = (int)SelectedClient["accountBalance"] - newsum;
+                        targetClient["accountBalance"] = (int)targetClient["accountBalance"] + sum;
                         break;
                     default:
                         break;
                 }
+
                 Transfer.Close();
                 Clients.Update();
                 DataRow paymentTransaction = Transactions.Table.NewRow();
@@ -367,7 +434,12 @@ namespace BankingSystem
                 paymentTransaction["NameTarget"] = SelectedClient[1];
                 paymentTransaction["LastnameTarget"] = SelectedClient[2];
                 paymentTransaction["PatronymicTarget"] = SelectedClient[3];
-                paymentTransaction["CardTarget"] = SelectedClient["cardNumber"];
+
+                if ((string)SelectedClient["clientType"] != "Juridical")
+                    paymentTransaction["CardTarget"] = SelectedClient["cardNumber"];
+                else
+                    paymentTransaction["CheckingAccount"] = SelectedClient["checkingAccount"];
+
                 paymentTransaction["ClientTypeTarget"] = SelectedClient["clientType"];
                 paymentTransaction["TransactionSum"] = sum;
                 paymentTransaction["Type"] = (int)TransactionType.Receive;
@@ -380,7 +452,12 @@ namespace BankingSystem
                 receiveTransaction["NameTarget"] = targetClient[1];
                 receiveTransaction["LastnameTarget"] = targetClient[2];
                 receiveTransaction["PatronymicTarget"] = targetClient[3];
-                receiveTransaction["CardTarget"] = targetClient["cardNumber"];
+
+                if ((string)SelectedClient["clientType"] != "Juridical")
+                    receiveTransaction["CardTarget"] = targetClient["cardNumber"];
+                else
+                    receiveTransaction["CheckingAccount"] = targetClient["checkingAccount"];
+
                 receiveTransaction["ClientTypeTarget"] = targetClient["clientType"];
                 receiveTransaction["TransactionSum"] = -newsum;
                 receiveTransaction["Type"] = (int)TransactionType.Payment;
@@ -391,8 +468,16 @@ namespace BankingSystem
             });
             TransferInfo = new Command(e =>
             {
-                var client = e as DataRowView;
                 TransactionInfo = new TransactionInfoWindow();
+                var client = e as DataRowView;
+                if ((string)client.Row["clientType"] == "Juridical")
+                {
+                    Binding accountBinding = new Binding("CheckingAccount");
+
+                    TransactionInfo.PaymentSource.DisplayMemberBinding = accountBinding;
+                    (TransactionInfo.PaymentSource.Header as GridViewColumnHeader).Content = "Расчетный счет";
+                    (TransactionInfo.PaymentSource.Header as GridViewColumnHeader).Width += 10;
+                }
                 try
                 {
                     TransactionInfo.DataContext = Transactions.Table.AsEnumerable().Where(x => (int)x["ClientId"] == (int)client["id"])
@@ -405,10 +490,18 @@ namespace BankingSystem
                 }
                 TransactionInfo.Show();
             });
-            CopyCardNumber = new Command(e =>
+            CopyCardNumberOrAccount = new Command(e =>
             {
                 var client = (DataRowView)e;
-                Clipboard.SetText(client.Row["cardNumber"].ToString());
+
+                if ((string)SelectedClient.Row["clientType"] == "Juridical")
+                {
+                    Clipboard.SetText(client.Row["checkingAccount"].ToString());
+                }
+                else
+                {
+                    Clipboard.SetText(client.Row["cardNumber"].ToString());
+                }
             });
             DepositButton = new Command(() =>
             {
@@ -427,8 +520,11 @@ namespace BankingSystem
                     MessageBox.Show("Нельзя пополнить счет на сумму более 10000$ за раз", "Ошибка", MessageBoxButton.OK);
                     return;
                 }
-                
-                SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] + result;
+                if ((string)SelectedClient.Row["clientType"] == "Juridical")
+                    SelectedClient["accountBalance"] = (int)SelectedClient["accountBalance"] + result;
+                else
+                    SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] + result;
+
                 Deposit.Close();
                 Clients.Update();
             }); // пополнение счета 
@@ -453,6 +549,7 @@ namespace BankingSystem
                 SetClientProps((string)SelectedClientType.Tag);
 
                 AddClient.Close();
+
                 void SetClientProps(string type)
                 {
                     long card = long.Parse(CardRandom(Random));
@@ -495,7 +592,7 @@ namespace BankingSystem
                 {
                     clients.ItemsSource = selectedDepartmentClients.Where(x => x[0].ToString().ToLower().Contains(searchField) || x[1].ToString().ToLower().Contains(searchField)
                     || x[2].ToString().ToLower().Contains(searchField) || x[3].ToString().ToLower().Contains(searchField) || x[4].ToString().ToLower().Contains(searchField) 
-                    || x[6].ToString().Equals(searchField)).AsDataView();
+                    || x[6].ToString().Equals(searchField) || x[8].ToString().Equals(searchField)).AsDataView();
                 }
 
             });
@@ -546,7 +643,7 @@ namespace BankingSystem
                 var clients = e as ListView;
                 lastdesc = false;
                 patrdesc = false;
-                balancedesc = false;
+                cardbalancedesc = false;
                 iddesc = true;
                 if (!namedesc)
                 {
@@ -577,7 +674,7 @@ namespace BankingSystem
                 var clients = e as ListView;
                 namedesc = false;
                 patrdesc = false;
-                balancedesc = false;
+                cardbalancedesc = false;
                 iddesc = true;
                 if (!lastdesc)
                 {
@@ -608,7 +705,7 @@ namespace BankingSystem
                 var clients = e as ListView;
                 namedesc = false;
                 lastdesc = false;
-                balancedesc = false;
+                cardbalancedesc = false;
                 iddesc = true;
                 if (!patrdesc)
                 {
@@ -634,14 +731,15 @@ namespace BankingSystem
                 }
                 patrdesc = !patrdesc;
             });
-            BalanceClick = new Command(e =>
+            CardBalanceClick = new Command(e =>
             {
                 var clients = e as ListView;
                 namedesc = false;
                 lastdesc = false;
                 patrdesc = false;
                 iddesc = true;
-                if (!balancedesc)
+                accountbalancedesc = false;
+                if (!cardbalancedesc)
                 {
                     clients.ItemsSource = Clients.Table.AsEnumerable()
                     .Where(x => (string)x["clientType"] == SelectedDepName)
@@ -663,7 +761,39 @@ namespace BankingSystem
                     })
                     .AsDataView();
                 }
-                balancedesc = !balancedesc;
+                cardbalancedesc = !cardbalancedesc;
+            });
+            AccountBalanceClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                patrdesc = false;
+                iddesc = true;
+                cardbalancedesc = false;
+                if (!accountbalancedesc)
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderBy(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["accountBalance"];
+                    })
+                    .AsDataView();
+                }
+                else
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderByDescending(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["accountBalance"];
+                    })
+                    .AsDataView();
+                }
+                accountbalancedesc = !accountbalancedesc;
             });
             IdClick = new Command(e =>
             {
@@ -671,7 +801,7 @@ namespace BankingSystem
                 namedesc = false;
                 lastdesc = false;
                 patrdesc = false;
-                balancedesc = false;
+                cardbalancedesc = false;
                 if (!iddesc)
                 {
                     clients.ItemsSource = Clients.Table.AsEnumerable()
@@ -935,7 +1065,18 @@ namespace BankingSystem
             }
             return true;
 
-        } // проверка на существование клиента, и возвращение его
+        }
+        private bool CheckAccount(string accountnumber, out DataRow client)
+        {
+            client = Clients.Table.AsEnumerable().FirstOrDefault(x => x["checkingAccount"].ToString().Equals(accountnumber));
+
+            if (client == default)
+            {
+                return false;
+            }
+            return true;
+
+        }
 
         #endregion
     }

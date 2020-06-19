@@ -19,6 +19,7 @@ namespace BankingSystem
     {
         GridView IndividualAndVipView;
         GridView JuridicalView;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -39,31 +40,42 @@ namespace BankingSystem
             {
                 CardNumberFields.Visibility = Visibility.Visible;
                 CheckAccountFields.Visibility = Visibility.Collapsed;
+
+                AccountTransfer.Visibility = Visibility.Collapsed;
+                CardTransfer.Visibility = Visibility.Visible;
+                InfoBalance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
+                Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
+
                 Clients.View = IndividualAndVipView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "Individual").AsDataView();
-                InfoBalance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
-                Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
             }
             else if (Deps.SelectedIndex == 1)
             {
                 CardNumberFields.Visibility = Visibility.Collapsed;
                 CheckAccountFields.Visibility = Visibility.Visible;
+
+                AccountTransfer.Visibility = Visibility.Visible;
+                CardTransfer.Visibility = Visibility.Collapsed;
+                InfoBalance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
+                Balance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
                 Clients.View = JuridicalView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "Juridical").AsDataView();
-                InfoBalance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
-                Balance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
             }
             else
             {
                 CardNumberFields.Visibility = Visibility.Visible;
                 CheckAccountFields.Visibility = Visibility.Collapsed;
+
+                AccountTransfer.Visibility = Visibility.Collapsed;
+                CardTransfer.Visibility = Visibility.Visible;
+                InfoBalance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
+                Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
+
                 Clients.View = IndividualAndVipView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "VIP").AsDataView();
-                InfoBalance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
-                Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
             }
         }
 
@@ -102,7 +114,7 @@ namespace BankingSystem
                 var idheader = new GridViewColumnHeader();
                 idheader.Command = (DataContext as Bank).IdClick;
                 idheader.CommandParameter = Clients;
-                idheader.Content = "id";
+                idheader.Content = "ID";
                 id.Header = idheader;
                 id.DisplayMemberBinding = new Binding("id");
 
@@ -141,8 +153,10 @@ namespace BankingSystem
                 GridViewColumn balance = new GridViewColumn();
                 var balanceheader = new GridViewColumnHeader();
                 balanceheader.Content = "Баланс карты";
+                balanceheader.Command = (DataContext as Bank).CardBalanceClick;
                 balance.Width = 110;
                 balance.Header = balanceheader;
+                
                 balance.DisplayMemberBinding = new Binding("bankBalance");
 
                 IndividualAndVipView.Columns.Add(id);
@@ -163,7 +177,7 @@ namespace BankingSystem
                 var idheader = new GridViewColumnHeader();
                 idheader.Command = (DataContext as Bank).IdClick;
                 idheader.CommandParameter = Clients;
-                idheader.Content = "id";
+                idheader.Content = "ID";
                 id.Header = idheader;
                 id.DisplayMemberBinding = new Binding("id");
 
@@ -205,11 +219,21 @@ namespace BankingSystem
                 account.Header = accountheader;
                 account.DisplayMemberBinding = new Binding("checkingAccount");
 
+                GridViewColumn balance = new GridViewColumn();
+                var balanceheader = new GridViewColumnHeader();
+                balanceheader.Content = "Баланс счета";
+                balanceheader.Command = (DataContext as Bank).AccountBalanceClick;
+                balanceheader.CommandParameter = Clients;
+                balance.Width = 110;
+                balance.Header = balanceheader;
+                balance.DisplayMemberBinding = new Binding("accountBalance");
+
                 JuridicalView.Columns.Add(id);
                 JuridicalView.Columns.Add(namecolumn);
                 JuridicalView.Columns.Add(lastname);
                 JuridicalView.Columns.Add(patronymic);
                 JuridicalView.Columns.Add(account);
+                JuridicalView.Columns.Add(balance);
             }
 
             #endregion

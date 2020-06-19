@@ -13,7 +13,7 @@
     <Window.Resources>
         <ContextMenu x:Key="Menu">
             <ContextMenu.Items>
-                <MenuItem Header="Скопировать номер карты" Command="{Binding DataContext.CopyCardNumber, RelativeSource={RelativeSource AncestorType=Window}}"
+                <MenuItem Header="Скопировать номер карты/расчетного счета" Command="{Binding DataContext.CopyCardNumberOrAccount, RelativeSource={RelativeSource AncestorType=Window}}"
                           CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Mode=Self}}"/>
             </ContextMenu.Items>
         </ContextMenu>
@@ -165,16 +165,19 @@
 
             <Border Grid.Column="1" BorderThickness="1" BorderBrush="Gray">
                 <StackPanel Margin="5">
+                    
                     <StackPanel Margin="5,0,0,5" Height="20" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Text="Баланс:  $"/>
                         <TextBlock x:Name="Balance" FontSize="15" Text="{Binding ElementName=Clients,
                             Path=SelectedItem.bankBalance}"/>
                     </StackPanel>
-                    <Button Width="140" Height="30" HorizontalAlignment="Left" Margin="5" Cursor="Hand" Command="{Binding TransferButton}">
+                    
+                    <Button x:Name="CardTransfer"  Width="140" Height="30" HorizontalAlignment="Left" Margin="5" Cursor="Hand"
+                            Command="{Binding TransferButton}">
                         <Button.Template>
                             <ControlTemplate>
                                 <Border BorderBrush="Gray" BorderThickness="1" Cursor="Hand">
-                                    <StackPanel Orientation="Horizontal" Background="Wheat">
+                                    <StackPanel x:Name="TransferField" Orientation="Horizontal" Background="Wheat">
                                         <Image Source="img/transfer.png" HorizontalAlignment="Left" />
                                         <ContentPresenter Content="Перевод на карту" HorizontalAlignment="right" Margin="0 5 20 0"/>
                                     </StackPanel>
@@ -182,6 +185,21 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
+                    
+                    <Button x:Name="AccountTransfer"  Width="190" Height="30" HorizontalAlignment="Left" Margin="5" Cursor="Hand"
+                            Command="{Binding TransferButton}" Visibility="Collapsed">
+                        <Button.Template>
+                            <ControlTemplate>
+                                <Border BorderBrush="Gray" BorderThickness="1" Cursor="Hand">
+                                    <StackPanel Orientation="Horizontal" Background="Wheat">
+                                        <Image Source="img/transfer.png" HorizontalAlignment="Left" />
+                                        <ContentPresenter Content="Перевод на расчетный счет" HorizontalAlignment="right" Margin="0 5 20 0"/>
+                                    </StackPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    
                     <Button Width="120" Height="30" HorizontalAlignment="Left" Margin="5" Cursor="Hand" Command="{Binding DepositButton}">
                         <Button.Template>
                             <ControlTemplate>
@@ -245,46 +263,7 @@
 
             <ListView x:Name="Clients" BorderThickness="1" SelectedItem="{Binding SelectedClient, Mode=OneWayToSource}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled" Grid.Row="1"
-                      SelectionChanged="Clients_SelectionChanged" ItemContainerStyle="{StaticResource Copy}" SelectionMode="Single" Grid.ColumnSpan="2">
-                <!--<ListView.View>
-                    <GridView>
-                        <GridViewColumn>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                        <TextBlock Text="{Binding id}" TextAlignment="Right"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                            <GridViewColumnHeader HorizontalContentAlignment="Center" MinWidth="60" Width="Auto" Command="{Binding IdClick}"
-                                                  CommandParameter="{Binding ElementName=Clients}">ID</GridViewColumnHeader>
-                        </GridViewColumn>
-                        <GridViewColumn>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Background="Wheat" FontWeight="Bold" FontSize="16" Width="20" Content="!" Command="{Binding RelativeSource=
-                                            {RelativeSource AncestorType=Window, Mode=FindAncestor}, Path=DataContext.TransferInfo}" CommandParameter="{Binding RelativeSource=
-                                            {RelativeSource Mode=Self}, Path=DataContext}"/>
-                                        <TextBlock TextAlignment="Center" Padding="4" Text="{Binding clientName}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                            <GridViewColumnHeader Command="{Binding NameClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Имя</GridViewColumnHeader>
-                        </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding clientLastname}">
-                            <GridViewColumnHeader Command="{Binding LastClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Фамилия</GridViewColumnHeader>
-                        </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding clientPatronymic}">
-                            <GridViewColumnHeader Command="{Binding PatrClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Отчество</GridViewColumnHeader>
-                        </GridViewColumn>
-                        <GridViewColumn x:Name="Account" DisplayMemberBinding="{Binding cardNumber, Converter={x:Static local:CardConverter.Instance}}">
-                            <GridViewColumnHeader Width="150">Номер карты</GridViewColumnHeader>
-                        </GridViewColumn>
-                        <GridViewColumn x:Name="test1" DisplayMemberBinding="{Binding bankBalance}">
-                            <GridViewColumnHeader x:Name="test" Command="{Binding BalanceClick}" CommandParameter="{Binding ElementName=Clients}" Width="140">Баланс</GridViewColumnHeader>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>-->
-            </ListView>
+                      SelectionChanged="Clients_SelectionChanged" ItemContainerStyle="{StaticResource Copy}" SelectionMode="Single" Grid.ColumnSpan="2"/>
 
         </Grid>
 

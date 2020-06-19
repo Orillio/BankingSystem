@@ -47,6 +47,7 @@ namespace BankingSystem.DataBase
             Adapter.InsertCommand.Parameters.Add("@LastnameTarget", SqlDbType.NVarChar, 20, "LastnameTarget");
             Adapter.InsertCommand.Parameters.Add("@PatronymicTarget", SqlDbType.NVarChar, 20, "PatronymicTarget");
             Adapter.InsertCommand.Parameters.Add("@CardTarget", SqlDbType.BigInt, 20, "CardTarget");
+            Adapter.InsertCommand.Parameters.Add("@CheckingAccount", SqlDbType.NVarChar, 20, "CheckingAccount");
             Adapter.InsertCommand.Parameters.Add("@ClientTypeTarget", SqlDbType.NVarChar, 20, "ClientTypeTarget");
             Adapter.InsertCommand.Parameters.Add("@TransactionSum", SqlDbType.BigInt, 20, "TransactionSum");
             Adapter.InsertCommand.Parameters.Add("@Type", SqlDbType.Int, 4, "Type");
@@ -63,6 +64,7 @@ namespace BankingSystem.DataBase
             Adapter.UpdateCommand.Parameters.Add("@LastnameTarget", SqlDbType.NVarChar, 20, "LastnameTarget");
             Adapter.UpdateCommand.Parameters.Add("@PatronymicTarget", SqlDbType.NVarChar, 20, "PatronymicTarget");
             Adapter.UpdateCommand.Parameters.Add("@CardTarget", SqlDbType.BigInt, 20, "CardTarget");
+            Adapter.UpdateCommand.Parameters.Add("@CheckingAccount", SqlDbType.NVarChar, 20, "CheckingAccount");
             Adapter.UpdateCommand.Parameters.Add("@ClientTypeTarget", SqlDbType.NVarChar, 20, "ClientTypeTarget");
             Adapter.UpdateCommand.Parameters.Add("@TransactionSum", SqlDbType.BigInt, 20, "TransactionSum");
             Adapter.UpdateCommand.Parameters.Add("@Type", SqlDbType.Int, 4, "Type");
