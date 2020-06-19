@@ -29,6 +29,12 @@ namespace BankingSystem
         private void Deps_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             DepositField.Text = "";
+
+            var checkBalanceBind = new Binding("SelectedItem.accountBalance");
+            var cardBalanceBind = new Binding("SelectedItem.bankBalance");
+            cardBalanceBind.ElementName = "Clients";
+            checkBalanceBind.ElementName = "Clients";
+
             if (Deps.SelectedIndex == 0)
             {
                 CardNumberFields.Visibility = Visibility.Visible;
@@ -36,6 +42,8 @@ namespace BankingSystem
                 Clients.View = IndividualAndVipView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "Individual").AsDataView();
+                InfoBalance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
+                Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
             }
             else if (Deps.SelectedIndex == 1)
             {
@@ -44,6 +52,8 @@ namespace BankingSystem
                 Clients.View = JuridicalView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "Juridical").AsDataView();
+                InfoBalance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
+                Balance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
             }
             else
             {
@@ -52,6 +62,8 @@ namespace BankingSystem
                 Clients.View = IndividualAndVipView;
                 Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
                     .Where(x => x.Field<string>(5) == "VIP").AsDataView();
+                InfoBalance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
+                Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
             }
         }
 

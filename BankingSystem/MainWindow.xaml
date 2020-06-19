@@ -87,7 +87,7 @@
                     </Button.Template>
                 </Button>
 
-                <Button Height="25" Cursor="Hand" Command="{Binding DeleteClient}">
+                <Button Height="25" Cursor="Hand" Command="{Binding DeleteClient}" CommandParameter="{Binding ElementName=Clients}">
                     <Button.Template>
                         <ControlTemplate>
                             <Border BorderBrush="Gray" BorderThickness="1" Cursor="Hand">
@@ -118,7 +118,7 @@
                         <TextBlock FontSize="15" Margin="0,0,5,0" Text="{Binding ElementName=Clients, Path=SelectedItem.clientLastname}"/>
                         <TextBlock FontSize="15" Text="{Binding ElementName=Clients, Path=SelectedItem.clientPatronymic}"/>
                     </StackPanel>
-
+                    
                     <!--Номер карты клиента-->
                     <StackPanel x:Name="CardNumberFields" Margin="5,0,0,5" Height="25" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Margin="0,0,5,0" Text="Номер карты: "/>
@@ -157,8 +157,7 @@
                     <!--Информация о балансе-->
                     <StackPanel Margin="5,0,0,5" Height="20" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Text="Баланс:  $"/>
-                        <TextBlock FontSize="15" Text="{Binding ElementName=Clients,
-                            Path=SelectedItem.bankBalance}"/>
+                        <TextBlock x:Name="InfoBalance" FontSize="15"/>
                     </StackPanel>
 
                 </StackPanel>
@@ -168,7 +167,7 @@
                 <StackPanel Margin="5">
                     <StackPanel Margin="5,0,0,5" Height="20" VerticalAlignment="Top" Orientation="Horizontal">
                         <TextBlock FontSize="15" Text="Баланс:  $"/>
-                        <TextBlock FontSize="15" Text="{Binding ElementName=Clients,
+                        <TextBlock x:Name="Balance" FontSize="15" Text="{Binding ElementName=Clients,
                             Path=SelectedItem.bankBalance}"/>
                     </StackPanel>
                     <Button Width="140" Height="30" HorizontalAlignment="Left" Margin="5" Cursor="Hand" Command="{Binding TransferButton}">

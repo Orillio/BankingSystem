@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -190,7 +191,7 @@ namespace BankingSystem
             Transactions = new TransactionsDataBase(selectTrans, insertTrans, updateTrans, deleteTrans);
             #endregion
 
-            FillClients(10);
+            FillClients(50);
 
             #region Команды
 
@@ -464,8 +465,16 @@ namespace BankingSystem
                     newClient[3] = AddClient.Patromymic.Text;
                     newClient[4] = AddClient.Age.Text;
                     newClient[5] = type;
-                    newClient[6] = card;
-                    newClient[7] = 0;
+                    if (type != "Juridical")
+                    {
+                        newClient[6] = card;
+                        newClient[7] = 0;
+                    }
+                    else
+                    {
+                        newClient[8] = RandomCheckingAccount();
+                        newClient[9] = 0;
+                    }
                     Clients.Table.Rows.Add(newClient);
                     Clients.Update();
                 }
@@ -523,12 +532,13 @@ namespace BankingSystem
                 }
                 else { EditClient.Close(); Clients.Update(); return; }
             }); // изменение клиента
-            DeleteClient = new Command(() =>
+            DeleteClient = new Command(e =>
             {
                 if (SelectedClient == null) { MessageBox.Show("Клиент не выбран"); return; }
                 var res = MessageBox.Show("Вы уверены, что хотите удалить клиента?", "", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (res == MessageBoxResult.No) return;
-                Clients.Table.Rows[Clients.Table.Rows.IndexOf(SelectedClient.Row)].Delete();
+                Clients.Table.AcceptChanges();
+                ((e as ListView).ItemsSource as DataView).Delete((e as ListView).SelectedIndex);
                 Clients.Update();
             });
             NameClick = new Command(e =>
@@ -538,13 +548,27 @@ namespace BankingSystem
                 patrdesc = false;
                 balancedesc = false;
                 iddesc = true;
-                if (namedesc)
+                if (!namedesc)
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["clientName"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderBy(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["clientName"];
+                    })
+                    .AsDataView();
                 }
                 else
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["clientName"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderByDescending(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["clientName"];
+                    })
+                    .AsDataView();
                 }
                 namedesc = !namedesc;
             });
@@ -555,10 +579,28 @@ namespace BankingSystem
                 patrdesc = false;
                 balancedesc = false;
                 iddesc = true;
-                if (lastdesc)
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["clientLastname"]).AsDataView();
+                if (!lastdesc)
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderBy(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["clientLastname"];
+                    })
+                    .AsDataView();
+                }
                 else
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["clientLastname"]).AsDataView();
+                {
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderByDescending(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["clientLastname"];
+                    })
+                    .AsDataView();
+                }
                 lastdesc = !lastdesc;
             });
             PatrClick = new Command(e =>
@@ -568,13 +610,27 @@ namespace BankingSystem
                 lastdesc = false;
                 balancedesc = false;
                 iddesc = true;
-                if (patrdesc)
+                if (!patrdesc)
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["clientPatronymic"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderBy(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["clientPatronymic"];
+                    })
+                    .AsDataView();
                 }
                 else
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["clientPatronymic"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderByDescending(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["clientPatronymic"];
+                    })
+                    .AsDataView();
                 }
                 patrdesc = !patrdesc;
             });
@@ -585,13 +641,27 @@ namespace BankingSystem
                 lastdesc = false;
                 patrdesc = false;
                 iddesc = true;
-                if (balancedesc)
+                if (!balancedesc)
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["bankBalance"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderBy(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["bankBalance"];
+                    })
+                    .AsDataView();
                 }
                 else
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["bankBalance"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderByDescending(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["bankBalance"];
+                    })
+                    .AsDataView();
                 }
                 balancedesc = !balancedesc;
             });
@@ -604,11 +674,25 @@ namespace BankingSystem
                 balancedesc = false;
                 if (!iddesc)
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderBy(x => x["id"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderBy(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["id"];
+                    })
+                    .AsDataView();
                 }
                 else
                 {
-                    clients.ItemsSource = Clients.Table.AsEnumerable().Where(x => (string)x["clientType"] == SelectedDepName).OrderByDescending(x => x["id"]).AsDataView();
+                    clients.ItemsSource = Clients.Table.AsEnumerable()
+                    .Where(x => (string)x["clientType"] == SelectedDepName)
+                    .OrderByDescending(x =>
+                    {
+                        if (x.RowState == DataRowState.Deleted) return null;
+                        return x["id"];
+                    })
+                    .AsDataView();
                 }
                 iddesc = !iddesc;
             });
@@ -806,7 +890,8 @@ namespace BankingSystem
                     ? "Individual" : "VIP";
                 if ((string)data[5] == "Juridical")
                 {
-                    data["checkingAccount"] = RandomCheckingAccount();
+                    data[8] = RandomCheckingAccount();
+                    data[9] = Random.Next(10000, 599999);
                 }
                 else
                 {
@@ -816,7 +901,6 @@ namespace BankingSystem
                 db.Table.Rows.Add(data);
             }
         }
-
         private string RandomCheckingAccount()
         {
             string basestring = "40817810099";
