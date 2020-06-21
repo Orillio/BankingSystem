@@ -9,10 +9,11 @@
 
 namespace BankingSystem
 {
+    using PropertiesChangedLib;
     using System;
     using System.Collections.Generic;
     
-    public partial class Client
+    public partial class Client : PropertiesChanged
     {
         public int Id { get; set; }
         public string clientName { get; set; }

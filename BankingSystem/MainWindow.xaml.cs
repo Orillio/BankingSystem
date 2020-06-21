@@ -54,9 +54,8 @@ namespace BankingSystem
 
                 Clients.View = IndividualAndVipView;
 
-                // 3 новые obser collec в bank для использования здесь
-
-                Clients.ItemsSource = contextClients.Local.Where(x => x.clientType == "Individual");
+                Bank.IndividualClients = new ObservableCollection<Client>((DataContext as Bank).Context.Clients.Where(x => x.clientType == "Individual"));
+                Clients.ItemsSource = Bank.IndividualClients;
             }
             else if (Deps.SelectedIndex == 1)
             {
@@ -70,7 +69,8 @@ namespace BankingSystem
 
                 Clients.View = JuridicalView;
 
-                Clients.ItemsSource = contextClients.Local.Where(x => x.clientType == "Juridical");
+                Bank.IndividualClients = new ObservableCollection<Client>((DataContext as Bank).Context.Clients.Where(x => x.clientType == "Juridical"));
+                Clients.ItemsSource = Bank.JuridicalClients;
             }
             else
             {
@@ -83,8 +83,8 @@ namespace BankingSystem
                 Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
 
                 Clients.View = IndividualAndVipView;
-
-                Clients.ItemsSource = contextClients.Local.Where(x => x.clientType == "VIP");
+                Bank.VipClients = new ObservableCollection<Client>((DataContext as Bank).Context.Clients.Where(x => x.clientType == "VIP"));
+                Clients.ItemsSource = Bank.VipClients;
             }
         }
 
@@ -163,6 +163,7 @@ namespace BankingSystem
                 var balanceheader = new GridViewColumnHeader();
                 balanceheader.Content = "Баланс карты";
                 balanceheader.Command = (DataContext as Bank).CardBalanceClick;
+                balanceheader.CommandParameter = Clients;
                 balance.Width = 110;
                 balance.Header = balanceheader;
 

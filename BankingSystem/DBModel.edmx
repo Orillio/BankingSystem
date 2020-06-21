@@ -31,18 +31,9 @@
           <Property Name="investmentSum" Type="int" Nullable="false" />
           <Property Name="percentage" Type="int" Nullable="false" />
         </EntityType>
-        <!--Ошибки, обнаруженные при создании:
-предупреждение 6002: В таблице или представлении "LocalDB.dbo.Transactions" не определен первичный ключ. Ключ был выведен, а определение таблицы или представления было создано в режиме только для чтения.-->
         <EntityType Name="Transactions">
           <Key>
             <PropertyRef Name="Id" />
-            
-            
-            
-            
-            
-            
-            
           </Key>
           <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="ClientId" Type="int" Nullable="false" />
@@ -58,20 +49,7 @@
         <EntityContainer Name="Хранилище LocalDBModelContainer">
           <EntitySet Name="Clients" EntityType="Self.Clients" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Investments" EntityType="Self.Investments" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="Transactions" EntityType="Self.Transactions" store:Type="Tables" store:Schema="dbo">
-            <DefiningQuery>SELECT 
-    [Transactions].[Id] AS [Id], 
-    [Transactions].[ClientId] AS [ClientId], 
-    [Transactions].[NameTarget] AS [NameTarget], 
-    [Transactions].[LastnameTarget] AS [LastnameTarget], 
-    [Transactions].[PatronymicTarget] AS [PatronymicTarget], 
-    [Transactions].[CardTarget] AS [CardTarget], 
-    [Transactions].[CheckingAccount] AS [CheckingAccount], 
-    [Transactions].[ClientTypeTarget] AS [ClientTypeTarget], 
-    [Transactions].[TransactionSum] AS [TransactionSum], 
-    [Transactions].[Type] AS [Type]
-    FROM [dbo].[Transactions] AS [Transactions]</DefiningQuery>
-          </EntitySet>
+          <EntitySet Name="Transactions" EntityType="Self.Transactions" Schema="dbo" store:Type="Tables" />
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
@@ -107,7 +85,7 @@
           <Key>
             <PropertyRef Name="Id" />
           </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Id" Type="Int32" annotation:StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="ClientId" Type="Int32" Nullable="false" />
           <Property Name="NameTarget" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="LastnameTarget" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />

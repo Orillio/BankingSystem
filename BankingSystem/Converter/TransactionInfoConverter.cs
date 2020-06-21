@@ -17,10 +17,10 @@ namespace BankingSystem
         public static TransactionInfoConverter Instance = new TransactionInfoConverter();
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var trans = value as DataRowView;
+            var trans = value as Transaction;
             if (parameter.Equals("Client"))
             {
-               switch (trans.Row["ClientTypeTarget"])
+               switch (trans.ClientTypeTarget)
                {
                    case "VIP": return "VIP Клиент";
                    case "Individual": return "Физическое лицо";
@@ -31,7 +31,7 @@ namespace BankingSystem
             }
             else if (parameter.Equals("Type"))
             {
-                switch ((int)trans.Row["Type"])
+                switch (trans.Type)
                 {
                     case (int)TransactionType.Payment: return "Исходящий";
                     case (int)TransactionType.Receive: return "Входящий";

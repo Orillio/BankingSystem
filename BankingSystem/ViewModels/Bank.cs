@@ -29,6 +29,8 @@ namespace BankingSystem
     {
         #region ObservableColls
 
+
+        //Статические коллекции для ItemsSource у View
         public static ObservableCollection<Client> JuridicalClients { get; set; }
         public static ObservableCollection<Client> IndividualClients { get; set; }
         public static ObservableCollection<Client> VipClients { get; set; }
@@ -79,7 +81,6 @@ namespace BankingSystem
         }
         public ComboBoxItem SelectedClientType { get; set; }
 
-        //сделай датаконтекст листвью здесь, чтобы он заполнялся от выбранного отдела
         #endregion
 
         #region Команды
@@ -125,6 +126,42 @@ namespace BankingSystem
 
         public Investment GetInvestmentFromClient { get => Context.Investments.FirstOrDefault(x => x.clientId == SelectedClient.Id); }
 
+        public ObservableCollection<Client> GetCollectionFromSelectedDep
+        {
+            get
+            {
+                switch (SelectedDepName)
+                {
+                    case "Individual":
+                        return IndividualClients;
+                    case "Juridical":
+                        return JuridicalClients;
+                    case "VIP":
+                        return VipClients;
+                    default:
+                        break;
+                }
+                return null;
+            }
+            set
+            {
+                switch (SelectedDepName)
+                {
+                    case "Individual":
+                        IndividualClients = value;
+                        break;
+                    case "Juridical":
+                        JuridicalClients = value;
+                        break;
+                    case "VIP":
+                        VipClients = value;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
         #endregion
 
         #region Конструктор
@@ -132,11 +169,17 @@ namespace BankingSystem
         public Bank()
         {
             Context = new LocalDBEntities1();
+
+            FillClients(50);
+
+            #region Контекст и коллекции сущностей для View
+
             JuridicalClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "Juridical"));
             IndividualClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "Individual"));
             VipClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "VIP"));
 
-            //FillClients(50);
+            #endregion
+
 
             #region Команды
 
@@ -162,7 +205,7 @@ namespace BankingSystem
 
             #endregion
 
-            InfoClick = new Command(e =>
+            InfoClick = new Command(() =>
             {
                 if (SelectedClient == null) return;
                 if (GetInvestmentFromClient == null)
@@ -218,13 +261,13 @@ namespace BankingSystem
                     if (SelectedClient.accountBalance < result)
                     {
                         MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
-$" {SelectedClient.accountBalance}$"); return;
+                                        $" {SelectedClient.accountBalance}$"); return;
                     }
 
                     if (result < 500)
                     {
                         MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
-    $" {SelectedClient.accountBalance}$"); return;
+                                        $" {SelectedClient.accountBalance}$"); return;
                     }
                 }
                 else
@@ -232,13 +275,13 @@ $" {SelectedClient.accountBalance}$"); return;
                     if (SelectedClient.bankBalance < result)
                     {
                         MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
-$" {SelectedClient.bankBalance}$"); return;
+                                        $" {SelectedClient.bankBalance}$"); return;
                     }
 
                     if (result < 500)
                     {
                         MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
-    $" {SelectedClient.bankBalance}$"); return;
+                                        $" {SelectedClient.bankBalance}$"); return;
                     }
                 }
 
@@ -280,167 +323,161 @@ $" {SelectedClient.bankBalance}$"); return;
                 }
                 CreateInvest.Close();
             });
-            //TransferButton = new Command(() =>
-            //{
-            //    if (this.Transfer != null) return;
-            //    if (SelectedClient == null) return;
+            TransferButton = new Command(() =>
+            {
+                if (this.Transfer != null) return;
+                if (SelectedClient == null) return;
 
-            //    Transfer = new TransferWindow();
+                Transfer = new TransferWindow();
 
-            //    if ((string)SelectedClient["clientType"] == "Juridical")
-            //    {
-            //        if ((int)SelectedClient["accountBalance"] < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 20$"); return; }
-            //        Transfer.InputCardnumber.Text = "Введите расчетный счет получателя";
-            //    }
-            //    else
-            //    {
-            //        if ((int)SelectedClient["bankBalance"] < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
-            //    }
-            //    Transfer.Closed += (sender, e) => { this.Transfer = null; };
-            //    Transfer.DataContext = this;
-            //    Transfer.ShowDialog();
-            //});
-            //TransferButtonWindow = new Command(() =>
-            //{
-            //    string card = Transfer.CardNumber.Text;
-            //    if ((string)SelectedClient["clientType"] != "Juridical")
-            //    {
-            //        var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
-            //        card = enumcard.Aggregate<char, string>(null, (current, item) => current + item);
-            //    }
+                if (SelectedClient.clientType == "Juridical")
+                {
+                    if (SelectedClient.accountBalance < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 20$"); return; }
+                    Transfer.InputCardnumber.Text = "Введите расчетный счет получателя";
+                }
+                else
+                {
+                    if (SelectedClient.bankBalance < 10) { MessageBox.Show("Недостаточно денег для перевода. Минимальное количество - 10$"); return; }
+                }
+                Transfer.Closed += (sender, e) => { this.Transfer = null; };
+                Transfer.DataContext = this;
+                Transfer.ShowDialog();
+            });
+            TransferButtonWindow = new Command(() =>
+            {
+                string card = Transfer.CardNumber.Text;
+                if (SelectedClient.clientType != "Juridical")
+                {
+                    var enumcard = Transfer.CardNumber.Text.Where(x => x != ' '); // удаляю лишние пробелы (если такие есть)
+                    card = enumcard.Aggregate<char, string>(null, (current, item) => current + item);
+                }
 
-            //    #region Обратные условия
+                #region Обратные условия
 
-            //    if (string.IsNullOrEmpty(card)) { MessageBox.Show("Поле пустое"); return; }
+                if (string.IsNullOrEmpty(card)) { MessageBox.Show("Поле пустое"); return; }
 
-            //    DataRow targetClient = null;
-            //    long sum = 0;
+                Client targetClient = null;
+                int sum = 0;
 
-            //    if ((string)SelectedClient["clientType"] != "Juridical")
-            //    {
-            //        if (!long.TryParse(card, out long result)) { MessageBox.Show("В поле для ввода карты введена строка или слишком большое число"); return; }
-            //        if (!CheckCardNumber(result, out targetClient)) { MessageBox.Show("Такой карты не существует"); return; }
-            //        if (!long.TryParse(Transfer.TransferSum.Text, out sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
-            //        if ((int)SelectedClient["bankBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства:" +
-            //            $" {SelectedClient["bankBalance"]}$"); return; }
-            //    }
-            //    else
-            //    {
-            //        if (!CheckAccount(card, out targetClient)) { MessageBox.Show("Такого расчетного счета не существует"); return; }
-            //        if (!long.TryParse(Transfer.TransferSum.Text, out sum))
-            //        { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
-            //        if ((int)SelectedClient["accountBalance"] < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства:" +
-            //            $" {SelectedClient["accountBalance"]}$"); return; }
-            //    }
+                if ((string)SelectedClient.clientType != "Juridical")
+                {
+                    if (!long.TryParse(card, out long result)) { MessageBox.Show("В поле для ввода карты введена строка или слишком большое число"); return; }
+                    if (!CheckCardNumber(result, out targetClient)) { MessageBox.Show("Такой карты не существует"); return; }
+                    if (!int.TryParse(Transfer.TransferSum.Text, out sum)) { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
+                    if ((int)SelectedClient.bankBalance < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства:" +
+                        $" {SelectedClient.bankBalance}$"); return; }
+                }
+                else
+                {
+                    if (!CheckAccount(card, out targetClient)) { MessageBox.Show("Такого расчетного счета не существует"); return; }
+                    if (!int.TryParse(Transfer.TransferSum.Text, out sum))
+                    { MessageBox.Show("В поле для ввода суммы введена строка или слишком большое число"); return; }
+                    if (SelectedClient.accountBalance < sum) { MessageBox.Show($"Недостаточно средств для перевода. Ваши средства:" +
+                        $" {SelectedClient.accountBalance}$"); return; }
+                }
 
-            //    if (targetClient == SelectedClient.Row) { MessageBox.Show("Нельзя перевести средства себе"); return; }
+                if (targetClient == SelectedClient) { MessageBox.Show("Нельзя перевести средства себе"); return; }
 
-            //    #endregion
+                #endregion
 
-            //    MessageBoxResult res;
-            //    long newsum = 0;
+                MessageBoxResult res;
+                int newsum = 0;
 
-            //    switch ((string)SelectedClient["clientType"])
-            //    {
-            //        case "VIP":
-            //            newsum = sum;
-            //            res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {newsum}$", "Информация", MessageBoxButton.YesNo);
-            //            if (res != MessageBoxResult.Yes) return;
-            //            SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] - newsum;
-            //            targetClient["bankBalance"] = (int)targetClient["bankBalance"] + newsum;
-            //            break;
-            //        case "Individual":
-            //            newsum = (long)Math.Round(sum * 1.03);
-            //            if ((int)SelectedClient["bankBalance"] < newsum)
-            //            {
-            //                MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 3%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
-            //                return;
-            //            }
-            //            res = MessageBox.Show($"Комиссия перевода - 3%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
-            //            if (res != MessageBoxResult.Yes) return;
-            //            SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] - newsum;
-            //            targetClient["bankBalance"] = (int)targetClient["bankBalance"] + sum;
-            //            break;
-            //        case "Juridical":
-            //            newsum = (long)Math.Round(sum * 1.02);
-            //            if ((int)SelectedClient["accountBalance"] < newsum)
-            //            {
-            //                MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 2%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
-            //                return;
-            //            }
-            //            res = MessageBox.Show($"Комиссия перевода - 2%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
-            //            if (res != MessageBoxResult.Yes) return;
-            //            SelectedClient["accountBalance"] = (int)SelectedClient["accountBalance"] - newsum;
-            //            targetClient["accountBalance"] = (int)targetClient["accountBalance"] + sum;
-            //            break;
-            //        default:
-            //            break;
-            //    }
+                switch (SelectedClient.clientType)
+                {
+                    case "VIP":
+                        newsum = sum;
+                        res = MessageBox.Show($"Комиссия перевода - 0%. Вы переведете клиенту {newsum}$", "Информация", MessageBoxButton.YesNo);
+                        if (res != MessageBoxResult.Yes) return;
+                        SelectedClient.bankBalance = SelectedClient.bankBalance - newsum;
+                        targetClient.bankBalance = targetClient.bankBalance + newsum;
+                        break;
+                    case "Individual":
+                        newsum = (int)Math.Round(sum * 1.03);
+                        if (SelectedClient.bankBalance < newsum)
+                        {
+                            MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 3%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
+                            return;
+                        }
+                        res = MessageBox.Show($"Комиссия перевода - 3%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
+                        if (res != MessageBoxResult.Yes) return;
+                        SelectedClient.bankBalance = (int)SelectedClient.bankBalance - newsum;
+                        targetClient.bankBalance = (int)targetClient.bankBalance + sum;
+                        break;
+                    case "Juridical":
+                        newsum = (int)Math.Round(sum * 1.02);
+                        if (SelectedClient.accountBalance < newsum)
+                        {
+                            MessageBox.Show($"У вас недостаточно средств. Комиссия перевода - 2%. Вам необхрдимо {newsum}$", "Ошибка", MessageBoxButton.OK);
+                            return;
+                        }
+                        res = MessageBox.Show($"Комиссия перевода - 2%. У вас отнимется {newsum}$", "Информация", MessageBoxButton.YesNo);
+                        if (res != MessageBoxResult.Yes) return;
+                        SelectedClient.accountBalance = SelectedClient.accountBalance - newsum;
+                        targetClient.accountBalance = targetClient.accountBalance + sum;
+                        break;
+                    default:
+                        break;
+                }
 
-            //    Transfer.Close();
-            //    Clients.Update();
-            //    DataRow paymentTransaction = Transactions.Table.NewRow();
+                Transfer.Close();
+                Transaction paymentTransaction = new Transaction();
 
-            //    paymentTransaction["ClientId"] = targetClient[0];
-            //    paymentTransaction["NameTarget"] = SelectedClient[1];
-            //    paymentTransaction["LastnameTarget"] = SelectedClient[2];
-            //    paymentTransaction["PatronymicTarget"] = SelectedClient[3];
+                paymentTransaction.ClientId = targetClient.Id;
+                paymentTransaction.NameTarget = SelectedClient.clientName;
+                paymentTransaction.LastnameTarget = SelectedClient.clientLastname;
+                paymentTransaction.PatronymicTarget = SelectedClient.clientPatronymic;
 
-            //    if ((string)SelectedClient["clientType"] != "Juridical")
-            //        paymentTransaction["CardTarget"] = SelectedClient["cardNumber"];
-            //    else
-            //        paymentTransaction["CheckingAccount"] = SelectedClient["checkingAccount"];
+                if (SelectedClient.clientType != "Juridical")
+                    paymentTransaction.CardTarget = SelectedClient.cardNumber;
+                else
+                    paymentTransaction.CheckingAccount = SelectedClient.checkingAccount;
 
-            //    paymentTransaction["ClientTypeTarget"] = SelectedClient["clientType"];
-            //    paymentTransaction["TransactionSum"] = sum;
-            //    paymentTransaction["Type"] = (int)TransactionType.Receive;
+                paymentTransaction.ClientTypeTarget = SelectedClient.clientType;
+                paymentTransaction.TransactionSum = sum;
+                paymentTransaction.Type = (int)TransactionType.Receive;
 
-            //    Transactions.Table.Rows.Add(paymentTransaction);
+                Transaction receiveTransaction = new Transaction();
 
-            //    DataRow receiveTransaction = Transactions.Table.NewRow();
+                receiveTransaction.ClientId = SelectedClient.Id;
+                receiveTransaction.NameTarget = targetClient.clientName;
+                receiveTransaction.LastnameTarget = targetClient.clientLastname;
+                receiveTransaction.PatronymicTarget = targetClient.clientPatronymic;
 
-            //    receiveTransaction["ClientId"] = SelectedClient[0];
-            //    receiveTransaction["NameTarget"] = targetClient[1];
-            //    receiveTransaction["LastnameTarget"] = targetClient[2];
-            //    receiveTransaction["PatronymicTarget"] = targetClient[3];
+                if (SelectedClient.clientType != "Juridical")
+                    receiveTransaction.CardTarget = targetClient.cardNumber;
+                else
+                    receiveTransaction.CheckingAccount = targetClient.checkingAccount;
 
-            //    if ((string)SelectedClient["clientType"] != "Juridical")
-            //        receiveTransaction["CardTarget"] = targetClient["cardNumber"];
-            //    else
-            //        receiveTransaction["CheckingAccount"] = targetClient["checkingAccount"];
+                receiveTransaction.ClientTypeTarget = targetClient.clientType;
+                receiveTransaction.TransactionSum = -newsum;
+                receiveTransaction.Type = (int)TransactionType.Payment;
 
-            //    receiveTransaction["ClientTypeTarget"] = targetClient["clientType"];
-            //    receiveTransaction["TransactionSum"] = -newsum;
-            //    receiveTransaction["Type"] = (int)TransactionType.Payment;
+                Context.Transactions.Add(paymentTransaction);
+                Context.Transactions.Add(receiveTransaction);
 
-            //    Transactions.Table.Rows.Add(receiveTransaction);
+                Context.SaveChanges();
+            });
+            TransferInfo = new Command(e =>
+            {
+                TransactionInfo = new TransactionInfoWindow();
+                var client = e as Client;
+                if (client.clientType == "Juridical")
+                {
+                    Binding accountBinding = new Binding("CheckingAccount");
 
-            //    Transactions.Update();
-            //});
-            //TransferInfo = new Command(e =>
-            //{
-            //    TransactionInfo = new TransactionInfoWindow();
-            //    var client = e as DataRowView;
-            //    if ((string)client.Row["clientType"] == "Juridical")
-            //    {
-            //        Binding accountBinding = new Binding("CheckingAccount");
-
-            //        TransactionInfo.PaymentSource.DisplayMemberBinding = accountBinding;
-            //        (TransactionInfo.PaymentSource.Header as GridViewColumnHeader).Content = "Расчетный счет";
-            //        (TransactionInfo.PaymentSource.Header as GridViewColumnHeader).Width += 10;
-            //    }
-            //    try
-            //    {
-            //        TransactionInfo.DataContext = Transactions.Table.AsEnumerable().Where(x => (int)x["ClientId"] == (int)client["id"])
-            //            .CopyToDataTable().DefaultView;
-            //    }
-            //    catch
-            //    {
-            //        MessageBox.Show("У выбранного клиента нет входящих или исходящих транзакций", "Ошибка", MessageBoxButton.OK);
-            //        return;
-            //    }
-            //    TransactionInfo.Show();
-            //});
+                    TransactionInfo.PaymentSource.DisplayMemberBinding = accountBinding;
+                    (TransactionInfo.PaymentSource.Header as GridViewColumnHeader).Content = "Расчетный счет";
+                    (TransactionInfo.PaymentSource.Header as GridViewColumnHeader).Width += 10;
+                }
+                TransactionInfo.DataContext = Context.Transactions.Where(x => x.ClientId == client.Id).ToList();
+                if ((TransactionInfo.DataContext as List<Transaction>).Count == 0)
+                {
+                    MessageBox.Show("У выбранного клиента нет входящих или исходящих транзакций", "Ошибка", MessageBoxButton.OK);
+                    return;
+                }
+                TransactionInfo.Show();
+            });
             CopyCardNumberOrAccount = new Command(e =>
             {
                 var client = (Client)e;
@@ -454,331 +491,296 @@ $" {SelectedClient.bankBalance}$"); return;
                     Clipboard.SetText(client.cardNumber.ToString());
                 }
             });
-            //DepositButton = new Command(() =>
-            //{
-            //    if (SelectedClient == null) return;
-            //    Deposit = new DepositWindow();
-            //    Deposit.DataContext = this;
-            //    Deposit.Closed += (sender, e) => { this.Deposit = null; };
-            //    Deposit.ShowDialog();
-            //}); // открытие окна пополнения счета
-            //DepositButtonWindow = new Command(() =>
-            //{
-            //    if (string.IsNullOrEmpty(Deposit.DepositField.Text)) { MessageBox.Show("Поле пустое"); return; }
-            //    if (!long.TryParse(Deposit.DepositField.Text, out long result)) { MessageBox.Show("В поле ввода строка или число слишком большое"); return; }
-            //    if (result > 10000)
-            //    {
-            //        MessageBox.Show("Нельзя пополнить счет на сумму более 10000$ за раз", "Ошибка", MessageBoxButton.OK);
-            //        return;
-            //    }
-            //    if ((string)SelectedClient.Row["clientType"] == "Juridical")
-            //        SelectedClient["accountBalance"] = (int)SelectedClient["accountBalance"] + result;
-            //    else
-            //        SelectedClient["bankBalance"] = (int)SelectedClient["bankBalance"] + result;
+            DepositButton = new Command(() =>
+            {
+                if (SelectedClient == null) return;
+                Deposit = new DepositWindow();
+                Deposit.DataContext = this;
+                Deposit.Closed += (sender, e) => { this.Deposit = null; };
+                Deposit.ShowDialog();
+            }); // открытие окна пополнения счета
+            DepositButtonWindow = new Command(() =>
+            {
+                if (string.IsNullOrEmpty(Deposit.DepositField.Text)) { MessageBox.Show("Поле пустое"); return; }
+                if (!int.TryParse(Deposit.DepositField.Text, out int result)) { MessageBox.Show("В поле ввода строка или число слишком большое"); return; }
+                if (result > 10000)
+                {
+                    MessageBox.Show("Нельзя пополнить счет на сумму более 10000$ за раз", "Ошибка", MessageBoxButton.OK);
+                    return;
+                }
+                if (SelectedClient.clientType == "Juridical")
+                    SelectedClient.accountBalance += result;
+                else
+                    SelectedClient.bankBalance += result;
 
-            //    Deposit.Close();
-            //    Clients.Update();
-            //}); // пополнение счета 
-            //AddClientButton = new Command(() =>
-            //{
-            //    AddClient = new AddClientWindow();
-            //    AddClient.DataContext = this;
-            //    AddClient.ShowDialog();
+                Deposit.Close();
+                Context.SaveChanges();
+            }); // пополнение счета 
+            AddClientButton = new Command(() =>
+            {
+                AddClient = new AddClientWindow();
+                AddClient.DataContext = this;
+                AddClient.ShowDialog();
 
-            //}); // открытие окна добавления клиента
-            //AddClientButtonWindow = new Command(() =>
-            //{
-            //    if (string.IsNullOrEmpty(AddClient.Name.Text) || string.IsNullOrEmpty(AddClient.Lastname.Text) || string.IsNullOrEmpty(AddClient.Patromymic.Text)
-            //        || string.IsNullOrEmpty(AddClient.Age.Text) || AddClient.Name.Text.Trim(' ') == "" || AddClient.Lastname.Text.Trim(' ') == "" ||
-            //            AddClient.Patromymic.Text.Trim(' ') == "" || AddClient.Age.Text.Trim(' ') == "") { MessageBox.Show("Одно или несколько полей не введены"); return; }
+            }); // открытие окна добавления клиента
+            AddClientButtonWindow = new Command(() =>
+            {
+                if (string.IsNullOrEmpty(AddClient.Name.Text) || string.IsNullOrEmpty(AddClient.Lastname.Text) || string.IsNullOrEmpty(AddClient.Patromymic.Text)
+                    || string.IsNullOrEmpty(AddClient.Age.Text) || AddClient.Name.Text.Trim(' ') == "" || AddClient.Lastname.Text.Trim(' ') == "" ||
+                        AddClient.Patromymic.Text.Trim(' ') == "" || AddClient.Age.Text.Trim(' ') == "") { MessageBox.Show("Одно или несколько полей не введены"); return; }
 
-            //    if (!int.TryParse(AddClient.Age.Text, out int res)) { MessageBox.Show("Введен неправильный возраст"); return; }
-            //    if (res > 200) { MessageBox.Show("Введен невозможный для человека возраст"); return; }
-            //    if (SelectedClientType == null) { MessageBox.Show("Вы не выбрали тип клиента"); return; }
-            //    DataRow newClient = Clients.Table.NewRow();
+                if (!int.TryParse(AddClient.Age.Text, out int res)) { MessageBox.Show("Введен неправильный возраст"); return; }
+                if (res > 200) { MessageBox.Show("Введен невозможный для человека возраст"); return; }
+                if (SelectedClientType == null) { MessageBox.Show("Вы не выбрали тип клиента"); return; }
+                Client newClient = new Client();
 
-            //    SetClientProps((string)SelectedClientType.Tag);
+                SetClientProps((string)SelectedClientType.Tag);
 
-            //    AddClient.Close();
+                Context.Clients.Add(newClient);
+                switch ((string)SelectedClientType.Tag)
+                {
+                    case "Juridical":
+                        JuridicalClients.Add(newClient);
+                        break;
+                    case "Individual":
+                        IndividualClients.Add(newClient);
+                        break;
+                    case "VIP":
+                        VipClients.Add(newClient);
+                        break;
+                    default:
+                        break;
+                }
+                Context.SaveChanges();
 
-            //    void SetClientProps(string type)
-            //    {
-            //        long card = long.Parse(CardRandom(Random));
-            //        while (CheckCardNumber(card, out var a))
-            //        {
-            //            card = long.Parse(CardRandom(Random));
-            //        }
-            //        newClient[1] = AddClient.Name.Text;
-            //        newClient[2] = AddClient.Lastname.Text;
-            //        newClient[3] = AddClient.Patromymic.Text;
-            //        newClient[4] = AddClient.Age.Text;
-            //        newClient[5] = type;
-            //        if (type != "Juridical")
-            //        {
-            //            newClient[6] = card;
-            //            newClient[7] = 0;
-            //        }
-            //        else
-            //        {
-            //            newClient[8] = RandomCheckingAccount();
-            //            newClient[9] = 0;
-            //        }
-            //        Clients.Table.Rows.Add(newClient);
-            //        Clients.Update();
-            //    }
+                AddClient.Close();
 
-            //}); // добавление клиента
+                void SetClientProps(string type)
+                {
+                    long card = long.Parse(CardRandom(Random));
+                    while (CheckCardNumber(card, out var a))
+                    {
+                        card = long.Parse(CardRandom(Random));
+                    }
+                    newClient.clientName = AddClient.Name.Text;
+                    newClient.clientLastname = AddClient.Lastname.Text;
+                    newClient.clientPatronymic = AddClient.Patromymic.Text;
+                    newClient.clientAge = res;
+                    newClient.clientType = type;
+                    if (type != "Juridical")
+                    {
+                        newClient.cardNumber = card;
+                        newClient.bankBalance = 0;
+                    }
+                    else
+                    {
+                        newClient.checkingAccount = RandomCheckingAccount();
+                        newClient.accountBalance = 0;
+                    }
+                }
+
+            }); // добавление клиента
             Search = new Command(e =>
             {
                 ListView clients = ((object[])e)[0] as ListView;
                 string searchField = ((object[])e)[1].ToString().ToLower();
 
-                var selectedDepartmentClients = Context.Clients.Local.Where(x => x.clientType == SelectedDepName);
-
+                var selectedDepartmentClients = Context.Clients.Where(x => x.clientType == SelectedDepName);
                 if (searchField == "Поиск".ToLower() || searchField == string.Empty)
                 {
-                    clients.ItemsSource = new ObservableCollection<Client>(selectedDepartmentClients);
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(selectedDepartmentClients);
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
                 }
                 else
                 {
-                    clients.ItemsSource = new ObservableCollection<Client>(selectedDepartmentClients.Where(x => x.clientName.ToLower().Contains(searchField)
-                    || x.clientLastname.ToLower().Contains(searchField) || x.clientPatronymic.ToLower().Contains(searchField) || x.Id.ToString().ToLower().Contains(searchField)
-                    || x.checkingAccount == searchField || x.cardNumber.ToString() == searchField).ToList());
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(selectedDepartmentClients.Where(x => x.clientName.ToLower().Contains(searchField)
+                            || x.clientLastname.ToLower().Contains(searchField) || x.clientPatronymic.ToLower().Contains(searchField)
+                            || x.Id.ToString().ToLower().Contains(searchField) || x.checkingAccount == searchField || x.cardNumber.ToString() == searchField));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+
                 }
 
             });
-            //EditClientButton = new Command(() =>
-            //{
-            //    if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }
-            //    EditClient = new EditClientWindow();
-            //    if ((string)SelectedClient.Row["clientType"] == "Juridical")
-            //    {
-            //        EditClient.Type.IsEnabled = false;
-            //    }
-            //    EditClient.DataContext = this;
-            //    EditClient.ShowDialog();
-            //}); // открытие окна изменения клиента
-            //EditClientButtonWindow = new Command(() =>
-            //{
-            //    if (EditClient.Age.Text != "" && EditClient.Age.Text.Trim(' ') != "")
-            //    {
-            //        if (int.Parse(EditClient.Age.Text) > 200) { MessageBox.Show("Вы ввели нереальный возраст"); return; }
-            //        SelectedClient["clientAge"] = int.Parse(EditClient.Age.Text);
-            //    }
-            //    if (EditClient.Name.Text != "" && EditClient.Name.Text.Trim(' ') != "") SelectedClient.Row["clientName"] = EditClient.Name.Text;
-            //    if (EditClient.Lastname.Text != "" && EditClient.Lastname.Text.Trim(' ') != "") SelectedClient.Row["clientLastname"] = EditClient.Lastname.Text;
-            //    if (EditClient.Patronymic.Text != "" && EditClient.Patronymic.Text.Trim(' ') != "") SelectedClient.Row["clientPatronymic"] = EditClient.Patronymic.Text;
-            //    if (EditSelectedClientType != null)
-            //    {
-            //        if ((string)SelectedClient.Row["clientType"] == (string)EditSelectedClientType.Tag) { EditClient.Close(); Clients.Update(); return; }
-            //        else
-            //        {
-            //            SelectedClient.Row["clientType"] = (string)EditSelectedClientType.Tag; 
-            //            Clients.Update();
-            //            EditClient.Close();
-            //        }
-            //    }
-            //    else { EditClient.Close(); Clients.Update(); return; }
-            //}); // изменение клиента
+            EditClientButton = new Command(() =>
+            {
+                if (SelectedClient == null) { MessageBox.Show("Вы не выбрали клиента"); return; }
+                EditClient = new EditClientWindow();
+                if (SelectedClient.clientType == "Juridical")
+                {
+                    EditClient.Type.IsEnabled = false;
+                }
+                EditClient.DataContext = this;
+                EditClient.ShowDialog();
+            }); // открытие окна изменения клиента
+            EditClientButtonWindow = new Command(() =>
+            {
+                if (EditClient.Age.Text != "" && EditClient.Age.Text.Trim(' ') != "")
+                {
+                    if (int.Parse(EditClient.Age.Text) > 200) { MessageBox.Show("Вы ввели нереальный возраст"); return; }
+                    SelectedClient.clientAge = int.Parse(EditClient.Age.Text);
+                }
+                if (EditClient.Name.Text != "" && EditClient.Name.Text.Trim(' ') != "") SelectedClient.clientName = EditClient.Name.Text;
+                if (EditClient.Lastname.Text != "" && EditClient.Lastname.Text.Trim(' ') != "") SelectedClient.clientLastname = EditClient.Lastname.Text;
+                if (EditClient.Patronymic.Text != "" && EditClient.Patronymic.Text.Trim(' ') != "") SelectedClient.clientPatronymic = EditClient.Patronymic.Text;
+                if (EditSelectedClientType != null)
+                {
+                    if (SelectedClient.clientType == (string)EditSelectedClientType.Tag) { EditClient.Close(); Context.SaveChanges(); return; }
+                    else
+                    {
+                        SelectedClient.clientType = (string)EditSelectedClientType.Tag;
+
+                        if (SelectedDepName == "Individual" && (string)EditSelectedClientType.Tag == "VIP")
+                        {
+                            IndividualClients.Remove(SelectedClient);
+                            VipClients.Add(SelectedClient);
+                        }
+                        else
+                        {
+                            VipClients.Remove(SelectedClient);
+                            IndividualClients.Add(SelectedClient);
+                        }
+                        Context.SaveChanges();
+                        EditClient.Close();
+                    }
+                }
+                else { EditClient.Close(); Context.SaveChanges(); return; }
+            }); // изменение клиента
             DeleteClient = new Command(e =>
             {
                 if (SelectedClient == null) { MessageBox.Show("Клиент не выбран"); return; }
                 var res = MessageBox.Show("Вы уверены, что хотите удалить клиента?", "", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (res == MessageBoxResult.No) return;
+
                 Context.Clients.Remove(SelectedClient);
+
+                switch (SelectedClient.clientType)
+                {
+                    case "VIP": VipClients.Remove(SelectedClient); break;
+                    case "Individual": IndividualClients.Remove(SelectedClient); break;
+                    case "Juridical": JuridicalClients.Remove(SelectedClient); break;
+                    default:
+                        break;
+                }
                 Context.SaveChanges();
             });
-            //NameClick = new Command(e =>
-            //{
-            //    var clients = e as ListView;
-            //    lastdesc = false;
-            //    patrdesc = false;
-            //    cardbalancedesc = false;
-            //    iddesc = true;
-            //    if (!namedesc)
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderBy(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["clientName"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    else
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderByDescending(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["clientName"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    namedesc = !namedesc;
-            //});
-            //LastClick = new Command(e =>
-            //{
-            //    var clients = e as ListView;
-            //    namedesc = false;
-            //    patrdesc = false;
-            //    cardbalancedesc = false;
-            //    iddesc = true;
-            //    if (!lastdesc)
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderBy(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["clientLastname"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    else
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderByDescending(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["clientLastname"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    lastdesc = !lastdesc;
-            //});
-            //PatrClick = new Command(e =>
-            //{
-            //    var clients = e as ListView;
-            //    namedesc = false;
-            //    lastdesc = false;
-            //    cardbalancedesc = false;
-            //    iddesc = true;
-            //    if (!patrdesc)
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderBy(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["clientPatronymic"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    else
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderByDescending(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["clientPatronymic"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    patrdesc = !patrdesc;
-            //});
-            //CardBalanceClick = new Command(e =>
-            //{
-            //    var clients = e as ListView;
-            //    namedesc = false;
-            //    lastdesc = false;
-            //    patrdesc = false;
-            //    iddesc = true;
-            //    accountbalancedesc = false;
-            //    if (!cardbalancedesc)
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderBy(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["bankBalance"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    else
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderByDescending(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["bankBalance"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    cardbalancedesc = !cardbalancedesc;
-            //});
-            //AccountBalanceClick = new Command(e =>
-            //{
-            //    var clients = e as ListView;
-            //    namedesc = false;
-            //    lastdesc = false;
-            //    patrdesc = false;
-            //    iddesc = true;
-            //    cardbalancedesc = false;
-            //    if (!accountbalancedesc)
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderBy(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["accountBalance"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    else
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderByDescending(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["accountBalance"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    accountbalancedesc = !accountbalancedesc;
-            //});
-            //IdClick = new Command(e =>
-            //{
-            //    var clients = e as ListView;
-            //    namedesc = false;
-            //    lastdesc = false;
-            //    patrdesc = false;
-            //    cardbalancedesc = false;
-            //    if (!iddesc)
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderBy(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["id"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    else
-            //    {
-            //        clients.ItemsSource = Clients.Table.AsEnumerable()
-            //        .Where(x => (string)x["clientType"] == SelectedDepName)
-            //        .OrderByDescending(x =>
-            //        {
-            //            if (x.RowState == DataRowState.Deleted) return null;
-            //            return x["id"];
-            //        })
-            //        .AsDataView();
-            //    }
-            //    iddesc = !iddesc;
-            //});
+
+            NameClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                lastdesc = false;
+                patrdesc = false;
+                cardbalancedesc = false;
+                iddesc = true;
+                if (!namedesc)
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderBy(x => x.clientName));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                else
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderByDescending(x => x.clientName));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                namedesc = !namedesc;
+            });
+            LastClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                patrdesc = false;
+                cardbalancedesc = false;
+                iddesc = true;
+                if (!lastdesc)
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderBy(x => x.clientLastname));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                else
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderByDescending(x => x.clientLastname));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                lastdesc = !lastdesc;
+            });
+            PatrClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                cardbalancedesc = false;
+                iddesc = true;
+                if (!patrdesc)
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderBy(x => x.clientPatronymic));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                else
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderByDescending(x => x.clientPatronymic));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                patrdesc = !patrdesc;
+            });
+            CardBalanceClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                patrdesc = false;
+                iddesc = true;
+                accountbalancedesc = false;
+                if (!cardbalancedesc)
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderBy(x => x.bankBalance));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                else
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderByDescending(x => x.bankBalance));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                cardbalancedesc = !cardbalancedesc;
+            });
+            AccountBalanceClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                patrdesc = false;
+                iddesc = true;
+                cardbalancedesc = false;
+                if (!accountbalancedesc)
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderBy(x => x.accountBalance));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                else
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderByDescending(x => x.accountBalance));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                accountbalancedesc = !accountbalancedesc;
+            });
+            IdClick = new Command(e =>
+            {
+                var clients = e as ListView;
+                namedesc = false;
+                lastdesc = false;
+                patrdesc = false;
+                cardbalancedesc = false;
+                if (!iddesc)
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderBy(x => x.Id));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                else
+                {
+                    GetCollectionFromSelectedDep = new ObservableCollection<Client>(GetCollectionFromSelectedDep.OrderByDescending(x => x.Id));
+                    clients.ItemsSource = GetCollectionFromSelectedDep;
+                }
+                iddesc = !iddesc;
+            });
             #endregion
-
-
 
         }
         #endregion
@@ -807,6 +809,7 @@ $" {SelectedClient.bankBalance}$"); return;
             //    return false;
             //}
         }
+
         private string ClientRep(int type, Random random)
         {
             if (type == 0)
@@ -920,23 +923,25 @@ $" {SelectedClient.bankBalance}$"); return;
                 }
             return null;
         } // репозиторий ФИО
-        //private DataRow RandomInvest()
-        //{
-        //    DataRow data = Investments.Table.NewRow();
-        //    data["investmentSum"] = Random.Next(500, 1000000);
-        //    data["investmentDate"] = new DateTime(Random.Next(2015, 2020),
-        //        Random.Next(1,13), Random.Next(1,28)).ToShortDateString();
 
-        //    if (Random.Next(1,3) == 1)
-        //    {
-        //        data["investmentType"] = InvestmentType.Capitalization.ToString();
-        //    }
-        //    else
-        //    {
-        //        data["investmentType"] = InvestmentType.NotCapitalization.ToString();
-        //    }
-        //    return data;
-        //}
+        private Investment RandomInvest()
+        {
+            Investment investment = new Investment();
+            investment.investmentSum = Random.Next(500, 1000000);
+            investment.investmentDate = new DateTime(Random.Next(2015, 2020),
+                Random.Next(1, 13), Random.Next(1, 28)).ToShortDateString();
+
+            if (Random.Next(1, 3) == 1)
+            {
+                investment.investmentType = InvestmentType.Capitalization.ToString();
+            }
+            else
+            {
+                investment.investmentType = InvestmentType.NotCapitalization.ToString();
+            }
+            return investment;
+        }
+
         public static string CardRandom(Random random)
         {
             string longrandom = random.Next(1_000_000_000, int.MaxValue).ToString() + random.Next(1_000_000_000, int.MaxValue).ToString();
@@ -953,83 +958,85 @@ $" {SelectedClient.bankBalance}$"); return;
             }
             return longrandom;
         }
-        //public void FillClients(int count)
-        //{
-        //    if (ClientsDB.Table.Rows.Count != 0) return;
 
-        //    FillClientsInDb(ClientsDB, count);
+        public void FillClients(int count)
+        {
+            if (Context.Clients.Count() != 0) return;
 
-        //    ClientsDB.Update();
+            FillClientsInDb(count);
 
-        //    FillRandomInvestmentInClients();
-        //}
+            FillRandomInvestmentInClients();
 
-        //private void FillRandomInvestmentInClients()
-        //{
-        //    foreach (DataRow row in ClientsDB.Table.Rows)
-        //    {
-        //        if (Random.Next(1, 3) == 1)
-        //        {
-        //            var inv = RandomInvest();
-        //            if ((string)row[5] == "VIP") inv["percentage"] = 15;
-        //            if ((string)row[5] == "Juridical") inv["percentage"] = 9;
-        //            if ((string)row[5] == "Individual") inv["percentage"] = 11;
-        //            inv["clientId"] = row["id"];
-        //            Investments.Table.Rows.Add(inv);
-        //        }
-        //    }
-        //    Investments.Update();
-        //}
-        //private void FillClientsInDb(ClientsDataBase db, int count)
-        //{
-        //    for (int i = 0; i < count; i++)
-        //    {
-        //        DataRow data = db.Table.NewRow();
-        //        data[1] = ClientRep(0, Random);
-        //        data[2] = ClientRep(1, Random);
-        //        data[3] = ClientRep(2, Random);
-        //        data[4] = Random.Next(18, 31);
-        //        data[5] = Random.Next(1, 4) == 1 ? "Juridical" : Random.Next(1, 4) == 2
-        //            ? "Individual" : "VIP";
-        //        if ((string)data[5] == "Juridical")
-        //        {
-        //            data[8] = RandomCheckingAccount();
-        //            data[9] = Random.Next(10000, 599999);
-        //        }
-        //        else
-        //        {
-        //            data[6] = long.Parse(CardRandom(Random));
-        //            data[7] = Random.Next(10, 200000);
-        //        }
-        //        db.Table.Rows.Add(data);
-        //    }
-        //}
+            Context.SaveChanges();
+        }
+
+        private void FillRandomInvestmentInClients()
+        {
+            foreach (Client client in Context.Clients)
+            {
+                if (Random.Next(1, 3) == 1)
+                {
+                    var inv = RandomInvest();
+                    if (client.clientType == "VIP") inv.percentage = 15;
+                    if (client.clientType == "Juridical") inv.percentage = 9;
+                    if (client.clientType == "Individual") inv.percentage = 11;
+                    inv.clientId = client.Id;
+                    Context.Investments.Add(inv);
+                }
+            }
+        }
+
+        private void FillClientsInDb(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Client client = new Client();
+                client.clientName = ClientRep(0, Random);
+                client.clientLastname = ClientRep(1, Random);
+                client.clientPatronymic = ClientRep(2, Random);
+                client.clientAge = Random.Next(18, 31);
+                client.clientType = Random.Next(1, 4) == 1 ? "Juridical" : Random.Next(1, 4) == 2
+                    ? "Individual" : "VIP";
+                if (client.clientType == "Juridical")
+                {
+                    client.checkingAccount = RandomCheckingAccount();
+                    client.accountBalance = Random.Next(10000, 599999);
+                }
+                else
+                {
+                    client.cardNumber = long.Parse(CardRandom(Random));
+                    client.bankBalance = Random.Next(10, 200000);
+                }
+                Context.Clients.Add(client);
+                Context.SaveChanges();
+            }
+        }
 
         #endregion
 
         #region Проверки
-        //private bool CheckCardNumber(long cardnumber, out DataRow client)
-        //{
-        //    client = ClientsDB.Table.AsEnumerable().FirstOrDefault(x => long.TryParse(x["cardNumber"].ToString(), out long num) && num == cardnumber);
+        private bool CheckCardNumber(long cardnumber, out Client client)
+        {
+            client = Context.Clients.FirstOrDefault(x => x.cardNumber == cardnumber);
 
-        //    if (client == default)
-        //    {
-        //        return false;
-        //    }
-        //    return true;
+            if (client == default)
+            {
+                return false;
+            }
+            return true;
 
-        //}
-        //private bool CheckAccount(string accountnumber, out DataRow client)
-        //{
-        //    client = ClientsDB.Table.AsEnumerable().FirstOrDefault(x => x["checkingAccount"].ToString().Equals(accountnumber));
+        }
+        private bool CheckAccount(string accountnumber, out Client client)
+        {
+            client = Context.Clients.FirstOrDefault(x => x.checkingAccount.Equals(accountnumber));
 
-        //    if (client == default)
-        //    {
-        //        return false;
-        //    }
-        //    return true;
+            if (client == default)
+            {
+                return false;
+            }
+            return true;
 
-        //}
+        }
 
         #endregion
     }
