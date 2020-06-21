@@ -27,8 +27,17 @@ namespace BankingSystem
 
     public class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
+        #region ObservableColls
 
+        public static ObservableCollection<Client> JuridicalClients { get; set; }
+        public static ObservableCollection<Client> IndividualClients { get; set; }
+        public static ObservableCollection<Client> VipClients { get; set; }
+        #endregion
+
+        #region Контекст
         public LocalDBEntities1 Context { get; set; }
+
+        #endregion
 
         #region Рандом
         public static Random Random = new Random(123);
@@ -123,7 +132,9 @@ namespace BankingSystem
         public Bank()
         {
             Context = new LocalDBEntities1();
-            
+            JuridicalClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "Juridical"));
+            IndividualClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "Individual"));
+            VipClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "VIP"));
 
             //FillClients(50);
 
@@ -178,13 +189,11 @@ namespace BankingSystem
                     {
                         SelectedClient.accountBalance += x;
                         Context.Investments.Remove(GetInvestmentFromClient);
-                        (e as ListView).ItemsSource = new ObservableCollection<Client>(Context.Clients.Local.Where(y => y.clientType == SelectedDepName));
                     }
                     else
                     {
                         SelectedClient.bankBalance += x;
                         Context.Investments.Remove(GetInvestmentFromClient);
-                        (e as ListView).ItemsSource = new ObservableCollection<Client>(Context.Clients.Local.Where(y => y.clientType == SelectedDepName));
                     }
 
                     Context.SaveChanges();
@@ -206,19 +215,31 @@ namespace BankingSystem
 
                 if (SelectedClient.clientType == "Juridical")
                 {
-                    if (SelectedClient.accountBalance < result) { MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
-                        $" {SelectedClient.accountBalance}$"); return; }
+                    if (SelectedClient.accountBalance < result)
+                    {
+                        MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
+$" {SelectedClient.accountBalance}$"); return;
+                    }
 
-                    if (result < 500) { MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
-                    $" {SelectedClient.accountBalance}$"); return; }
+                    if (result < 500)
+                    {
+                        MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
+    $" {SelectedClient.accountBalance}$"); return;
+                    }
                 }
                 else
                 {
-                    if (SelectedClient.bankBalance < result) { MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
-                        $" {SelectedClient.bankBalance}$"); return; }
+                    if (SelectedClient.bankBalance < result)
+                    {
+                        MessageBox.Show($"Недостаточно средств для вклада. Ваши средства:" +
+$" {SelectedClient.bankBalance}$"); return;
+                    }
 
-                    if (result < 500) { MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
-                    $" {SelectedClient.bankBalance}$"); return; }
+                    if (result < 500)
+                    {
+                        MessageBox.Show($"Минимальное количество средств для вклада - 500$. Ваши средства:" +
+    $" {SelectedClient.bankBalance}$"); return;
+                    }
                 }
 
                 if (SelectedInvType == null) { MessageBox.Show("Вы не выбрали тип вклада"); return; }
@@ -226,8 +247,13 @@ namespace BankingSystem
                 #endregion
 
                 InvestmentType type = (string)SelectedInvType.Content == "С капитализацией" ? InvestmentType.Capitalization : InvestmentType.NotCapitalization;
-                Investment newInvest = new Investment { clientId = SelectedClient.Id, investmentDate = DateTime.Now.ToShortDateString(),
-                    investmentType = type.ToString(), investmentSum = result, percentage = SelectedClient.clientType == "Juridical"
+                Investment newInvest = new Investment
+                {
+                    clientId = SelectedClient.Id,
+                    investmentDate = DateTime.Now.ToShortDateString(),
+                    investmentType = type.ToString(),
+                    investmentSum = result,
+                    percentage = SelectedClient.clientType == "Juridical"
                                             ? 9
                                             : (string)SelectedClient.clientType == "VIP"
                                             ? 15
@@ -515,7 +541,7 @@ namespace BankingSystem
                 }
                 else
                 {
-                    clients.ItemsSource = new ObservableCollection<Client>(selectedDepartmentClients.Where(x => x.clientName.ToLower().Contains(searchField) 
+                    clients.ItemsSource = new ObservableCollection<Client>(selectedDepartmentClients.Where(x => x.clientName.ToLower().Contains(searchField)
                     || x.clientLastname.ToLower().Contains(searchField) || x.clientPatronymic.ToLower().Contains(searchField) || x.Id.ToString().ToLower().Contains(searchField)
                     || x.checkingAccount == searchField || x.cardNumber.ToString() == searchField).ToList());
                 }
@@ -560,8 +586,6 @@ namespace BankingSystem
                 var res = MessageBox.Show("Вы уверены, что хотите удалить клиента?", "", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (res == MessageBoxResult.No) return;
                 Context.Clients.Remove(SelectedClient);
-                ((e as ListView).ItemsSource as ObservableCollection<Client>).Remove(SelectedClient);
-
                 Context.SaveChanges();
             });
             //NameClick = new Command(e =>

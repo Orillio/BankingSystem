@@ -8,13 +8,8 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Markup;
-using System.Windows.Media;
 using System.ComponentModel;
-using System.Runtime.Remoting.Contexts;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace BankingSystem
 {
@@ -60,12 +55,8 @@ namespace BankingSystem
                 Clients.View = IndividualAndVipView;
 
                 // 3 новые obser collec в bank для использования здесь
-                context.Configuration.AutoDetectChangesEnabled = true;
 
-                contextClients.Where(x => x.clientType == "Individual").Load();
-                Clients.ItemsSource = contextClients.Local;
-
-                context.Configuration.AutoDetectChangesEnabled = false;
+                Clients.ItemsSource = contextClients.Local.Where(x => x.clientType == "Individual");
             }
             else if (Deps.SelectedIndex == 1)
             {
@@ -79,12 +70,7 @@ namespace BankingSystem
 
                 Clients.View = JuridicalView;
 
-                context.Configuration.AutoDetectChangesEnabled = true;
-
-                contextClients.Where(x => x.clientType == "Juridical").Load();
-                Clients.ItemsSource = contextClients.Local;
-
-                context.Configuration.AutoDetectChangesEnabled = false;
+                Clients.ItemsSource = contextClients.Local.Where(x => x.clientType == "Juridical");
             }
             else
             {
@@ -98,12 +84,7 @@ namespace BankingSystem
 
                 Clients.View = IndividualAndVipView;
 
-                context.Configuration.AutoDetectChangesEnabled = true;
-
-                contextClients.Where(x => x.clientType == "VIP").Load();
-                Clients.ItemsSource = contextClients.Local;
-
-                context.Configuration.AutoDetectChangesEnabled = false;
+                Clients.ItemsSource = contextClients.Local.Where(x => x.clientType == "VIP");
             }
         }
 
