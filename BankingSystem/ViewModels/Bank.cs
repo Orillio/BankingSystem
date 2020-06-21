@@ -27,6 +27,9 @@ namespace BankingSystem
 
     public class Bank : PropertiesChanged // Модель представления банка для основногo окна
     {
+        ClientsDataBase DBClients;
+        InvestmentsDataBase DBInvest;
+
         #region ObservableColls
 
 
@@ -170,9 +173,28 @@ namespace BankingSystem
         {
             Context = new LocalDBEntities1();
 
-            FillClients(50);
+            #region DB init
+            var selectClient = @"SELECT * FROM Clients Order By Clients.Id";
+            var selectInvest = @"SELECT * FROM Investments";
+            var insertInvest = @"INSERT INTO Investments (clientId, investmentType, investmentDate, investmentSum, percentage)
+                                               VALUES (@clientId, @investmentType, @investmentDate, @investmentSum, @percentage)
+                                               SET @Id = @@IDENTITY";
 
-            #region Контекст и коллекции сущностей для View
+            var insertClient = @"INSERT INTO Clients (clientName, clientLastname, clientPatronymic, clientAge, clientType,
+                                                        cardNumber, bankBalance, checkingAccount, accountBalance)
+                                               VALUES (@clientName, @clientLastname, @clientPatronymic, @clientAge, @clientType,
+                                                        @cardNumber, @bankBalance, @checkingAccount, @accountBalance)
+                                               SET @Id = @@IDENTITY";
+
+            DBClients = new ClientsDataBase(selectClient, insertClient);
+            DBInvest = new InvestmentsDataBase(selectInvest, insertInvest);
+
+            #endregion
+
+
+            FillClients(10000);
+
+            #region Коллекции сущностей для View
 
             JuridicalClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "Juridical"));
             IndividualClients = new ObservableCollection<Client>(Context.Clients.Where(x => x.clientType == "Individual"));
@@ -792,22 +814,22 @@ namespace BankingSystem
             string basestring = "40817810099";
             var checkaccount = basestring + Random.Next(100000000, 999999999).ToString();
 
-            //while (AccExists(checkaccount))
-            //{
+            while (AccExists(checkaccount))
+            {
                 checkaccount = basestring + Random.Next(100000000, 999999999).ToString();
-            //}
+            }
             return checkaccount;
 
-            //bool AccExists(string account)
-            //{
-            //    if (ClientsDB == null) return false;
-            //    foreach (var acc in ClientsDB.Table.Rows)
-            //    {
-            //        if ((acc as DataRow)["checkingAccount"] != null)
-            //            if ((acc as DataRow)["checkingAccount"].ToString().Equals(account)) return true;
-            //    }
-            //    return false;
-            //}
+            bool AccExists(string account)
+            {
+                foreach (var acc in DBClients.Table.Rows)
+                {
+                    if ((acc as DataRow)["checkingAccount"] != null)
+                        if ((acc as DataRow)["checkingAccount"].ToString().Equals(account)) return true;
+                }
+                return false;
+            }
+
         }
 
         private string ClientRep(int type, Random random)
@@ -924,20 +946,20 @@ namespace BankingSystem
             return null;
         } // репозиторий ФИО
 
-        private Investment RandomInvest()
+        private DataRow RandomInvest()
         {
-            Investment investment = new Investment();
-            investment.investmentSum = Random.Next(500, 1000000);
-            investment.investmentDate = new DateTime(Random.Next(2015, 2020),
+            DataRow investment = DBInvest.Table.NewRow();
+            investment["investmentSum"] = Random.Next(500, 1000000);
+            investment["investmentDate"] = new DateTime(Random.Next(2015, 2020),
                 Random.Next(1, 13), Random.Next(1, 28)).ToShortDateString();
 
             if (Random.Next(1, 3) == 1)
             {
-                investment.investmentType = InvestmentType.Capitalization.ToString();
+                investment["investmentType"] = InvestmentType.Capitalization.ToString();
             }
             else
             {
-                investment.investmentType = InvestmentType.NotCapitalization.ToString();
+                investment["investmentType"] = InvestmentType.NotCapitalization.ToString();
             }
             return investment;
         }
@@ -967,48 +989,77 @@ namespace BankingSystem
 
             FillRandomInvestmentInClients();
 
-            Context.SaveChanges();
+            DBInvest.Update();
+            DBClients.Update();
         }
 
         private void FillRandomInvestmentInClients()
         {
-            foreach (Client client in Context.Clients)
+            foreach (DataRow client in DBClients.Table.Rows)
             {
                 if (Random.Next(1, 3) == 1)
                 {
                     var inv = RandomInvest();
-                    if (client.clientType == "VIP") inv.percentage = 15;
-                    if (client.clientType == "Juridical") inv.percentage = 9;
-                    if (client.clientType == "Individual") inv.percentage = 11;
-                    inv.clientId = client.Id;
-                    Context.Investments.Add(inv);
+                    if ((string)client["clientType"] == "VIP") inv["percentage"] = 15;
+                    if ((string)client["clientType"] == "Juridical") inv["percentage"] = 9;
+                    if ((string)client["clientType"] == "Individual") inv["percentage"] = 11;
+                    inv["clientId"] = client["Id"];
+                    DBInvest.Table.Rows.Add(inv);
                 }
             }
         }
 
         private void FillClientsInDb(int count)
         {
-            for (int i = 0; i < count; i++)
+            var task1 = new Thread(() => FillClientsParallel(count/5));
+            var task2 = new Thread(() => FillClientsParallel(count/5));
+            var task3 = new Thread(() => FillClientsParallel(count/5));
+            var task4 = new Thread(() => FillClientsParallel(count/5));
+            var task5 = new Thread(() => FillClientsParallel(count/5));
+
+            task1.Start();
+            task2.Start();
+            task3.Start();
+            task4.Start();
+            task5.Start();
+
+            task1.Join();
+            task2.Join();
+            task3.Join();
+            task4.Join();
+            task5.Join();
+
+        }
+
+        void FillClientsParallel(int k)
+        {
+            for (int i = 0; i < k; i++)
             {
-                Client client = new Client();
-                client.clientName = ClientRep(0, Random);
-                client.clientLastname = ClientRep(1, Random);
-                client.clientPatronymic = ClientRep(2, Random);
-                client.clientAge = Random.Next(18, 31);
-                client.clientType = Random.Next(1, 4) == 1 ? "Juridical" : Random.Next(1, 4) == 2
+                DataRow client = DBClients.Table.NewRow();
+                client["clientName"] = ClientRep(0, Random);
+                client["clientLastname"] = ClientRep(1, Random);
+                client["clientPatronymic"] = ClientRep(2, Random);
+                client["clientAge"] = Random.Next(18, 31);
+                client["clientType"] = Random.Next(1, 4) == 1 ? "Juridical" : Random.Next(1, 4) == 2
                     ? "Individual" : "VIP";
-                if (client.clientType == "Juridical")
+                if ((string)client["clientType"] == "Juridical")
                 {
-                    client.checkingAccount = RandomCheckingAccount();
-                    client.accountBalance = Random.Next(10000, 599999);
+                    lock (this)
+                    {
+                        client["checkingAccount"] = RandomCheckingAccount();
+                    }
+                    client["accountBalance"] = Random.Next(10000, 599999);
                 }
                 else
                 {
-                    client.cardNumber = long.Parse(CardRandom(Random));
-                    client.bankBalance = Random.Next(10, 200000);
+                    client["cardNumber"] = long.Parse(CardRandom(Random));
+                    client["bankBalance"] = Random.Next(10, 200000);
                 }
-                Context.Clients.Add(client);
-                Context.SaveChanges();
+                lock (this)
+                {
+                    DBClients.Table.Rows.Add(client);
+                    DBClients.Update();
+                }
             }
         }
 
