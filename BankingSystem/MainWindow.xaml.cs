@@ -1,14 +1,20 @@
 ﻿using BankingSystem.DataBase;
 using Newtonsoft.Json.Linq;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Data;
+using System.Data.Entity;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media;
-
+using System.ComponentModel;
+using System.Runtime.Remoting.Contexts;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace BankingSystem
 {
@@ -31,6 +37,11 @@ namespace BankingSystem
         {
             DepositField.Text = "";
 
+            var contextClients = (DataContext as Bank).Context.Clients;
+            var context = (DataContext as Bank).Context;
+
+            contextClients.Load();
+
             var checkBalanceBind = new Binding("SelectedItem.accountBalance");
             var cardBalanceBind = new Binding("SelectedItem.bankBalance");
             cardBalanceBind.ElementName = "Clients";
@@ -47,8 +58,14 @@ namespace BankingSystem
                 Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
 
                 Clients.View = IndividualAndVipView;
-                Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
-                    .Where(x => x.Field<string>(5) == "Individual").AsDataView();
+
+                // 3 новые obser collec в bank для использования здесь
+                context.Configuration.AutoDetectChangesEnabled = true;
+
+                contextClients.Where(x => x.clientType == "Individual").Load();
+                Clients.ItemsSource = contextClients.Local;
+
+                context.Configuration.AutoDetectChangesEnabled = false;
             }
             else if (Deps.SelectedIndex == 1)
             {
@@ -59,9 +76,15 @@ namespace BankingSystem
                 CardTransfer.Visibility = Visibility.Collapsed;
                 InfoBalance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
                 Balance.SetBinding(TextBlock.TextProperty, checkBalanceBind);
+
                 Clients.View = JuridicalView;
-                Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
-                    .Where(x => x.Field<string>(5) == "Juridical").AsDataView();
+
+                context.Configuration.AutoDetectChangesEnabled = true;
+
+                contextClients.Where(x => x.clientType == "Juridical").Load();
+                Clients.ItemsSource = contextClients.Local;
+
+                context.Configuration.AutoDetectChangesEnabled = false;
             }
             else
             {
@@ -74,18 +97,23 @@ namespace BankingSystem
                 Balance.SetBinding(TextBlock.TextProperty, cardBalanceBind);
 
                 Clients.View = IndividualAndVipView;
-                Clients.ItemsSource = (DataContext as Bank).Clients.Table.AsEnumerable()
-                    .Where(x => x.Field<string>(5) == "VIP").AsDataView();
+
+                context.Configuration.AutoDetectChangesEnabled = true;
+
+                contextClients.Where(x => x.clientType == "VIP").Load();
+                Clients.ItemsSource = contextClients.Local;
+
+                context.Configuration.AutoDetectChangesEnabled = false;
             }
         }
 
         private void Clients_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (Clients.SelectedIndex == -1) return;
-            DataRow investment = null;
+            Investment investment = null;
             if ((DataContext as Bank).GetInvestmentFromClient != null)
             {
-                investment = (DataContext as Bank).GetInvestmentFromClient.Row;
+                investment = (DataContext as Bank).GetInvestmentFromClient;
             }
             else
             {
@@ -93,7 +121,7 @@ namespace BankingSystem
                 return;
             }
 
-            DepositField.Text = investment.Field<string>(2) == "NotCapitalization"
+            DepositField.Text = investment.investmentType == "NotCapitalization"
                 ? "Без капитализации"
                 : "С капитализацией";
         }
@@ -116,7 +144,7 @@ namespace BankingSystem
                 idheader.CommandParameter = Clients;
                 idheader.Content = "ID";
                 id.Header = idheader;
-                id.DisplayMemberBinding = new Binding("id");
+                id.DisplayMemberBinding = new Binding("Id");
 
                 GridViewColumn namecolumn = (GridViewColumn)Application.Current.Resources["TransactionTemplate"];
                 (namecolumn.Header as GridViewColumnHeader).Command = (DataContext as Bank).NameClick;
@@ -156,7 +184,7 @@ namespace BankingSystem
                 balanceheader.Command = (DataContext as Bank).CardBalanceClick;
                 balance.Width = 110;
                 balance.Header = balanceheader;
-                
+
                 balance.DisplayMemberBinding = new Binding("bankBalance");
 
                 IndividualAndVipView.Columns.Add(id);
@@ -179,7 +207,7 @@ namespace BankingSystem
                 idheader.CommandParameter = Clients;
                 idheader.Content = "ID";
                 id.Header = idheader;
-                id.DisplayMemberBinding = new Binding("id");
+                id.DisplayMemberBinding = new Binding("Id");
 
                 GridViewColumn namecolumn = (GridViewColumn)Application.Current.Resources["TransactionTemplateJurid"];
                 (namecolumn.Header as GridViewColumnHeader).Command = (DataContext as Bank).NameClick;
@@ -240,4 +268,5 @@ namespace BankingSystem
 
         }
     }
+    
 }

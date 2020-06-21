@@ -30,19 +30,19 @@ namespace BankingSystem
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var dc = DataContext as DataRowView;
-            DateTime.TryParse((string)dc.Row["investmentDate"], out var date);
+            var investment = DataContext as Investment;
+            DateTime.TryParse(investment.investmentDate, out var date);
             DateTime.TryParse(curDate.Text, out var currentDate);
             var days = (currentDate - date).Days;
-            switch (dc.Row["investmentType"])
+            switch (investment.investmentType)
             {
                 case "Capitalization": // в случае, если тип инвестиции - с капитализацией
                     var months = days / 30; // считаем количество месяцев прошедших после депозита
-                    curSum.Text = ((long)((int)dc.Row["investmentSum"] + (int)dc.Row["investmentSum"] / 100.0 * (int)dc.Row["percentage"] / 12.0 * months)).ToString();
+                    curSum.Text = ((long)(investment.investmentSum + investment.investmentSum / 100.0 * investment.percentage / 12.0 * months)).ToString();
                     break;
                 case "NotCapitalization":// в случае, если тип инвестиции - без капитализации
                     var years = days / 365; // считаем количество лет прошедших после депозита
-                    curSum.Text = ((long)((int)dc.Row["investmentSum"] + (int)dc.Row["investmentSum"] / 100.0 * (int)dc.Row["percentage"] * years)).ToString();
+                    curSum.Text = ((long)(investment.investmentSum + investment.investmentSum / 100.0 * investment.percentage * years)).ToString();
                     break;
                 default:
                     break;
@@ -54,7 +54,7 @@ namespace BankingSystem
         {
             if(MessageBox.Show($"Вы уверены, что хотите вывести? Вы выведите {curSum.Text}$",
                 "Вы уверены?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                OnWithdraw?.Invoke(int.Parse(curSum.Text));
+                 OnWithdraw?.Invoke(int.Parse(curSum.Text));
         }
     }
 }

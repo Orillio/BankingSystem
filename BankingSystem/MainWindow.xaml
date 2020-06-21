@@ -136,7 +136,7 @@
                     <StackPanel Margin="0 0 0 5" Height="30" VerticalAlignment="Top" Orientation="Horizontal">
 
                         <!--Кнопка информации-->
-                        <Button Margin="5 0 10 0" Width="165" Height="30" Cursor="Hand" Command="{Binding InfoClick}">
+                        <Button Margin="5 0 10 0" Width="165" Height="30" Cursor="Hand" Command="{Binding InfoClick}" CommandParameter="{Binding ElementName=Clients}">
                             <Button.Template>
                                 <ControlTemplate>
                                     <Border BorderBrush="Gray" BorderThickness="1" Cursor="Hand">

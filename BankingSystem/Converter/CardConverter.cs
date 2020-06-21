@@ -14,6 +14,7 @@ namespace BankingSystem
         public static CardConverter Instance = new CardConverter();
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            if (value == null) return null;
             if (long.TryParse(value.ToString(), out var num)) 
                 return $"{value:#### #### #### ####}";
             return null;
